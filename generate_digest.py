@@ -9,7 +9,7 @@ import xml.etree.ElementTree as ET
 import requests
 
 
-SOURCE_RSS = "https://rsshub.app/telegram/channel/bankrollo"
+SOURCE_RSS = "https://wtf.roflcopter.fr/rss-bridge/?action=display&bridge=Telegram&username=bankrollo&format=Atom"
 OUTPUT_FILE = "feed.xml"
 
 GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
