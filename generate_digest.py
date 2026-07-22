@@ -204,19 +204,13 @@ def parse_feed(xml_text):
 
     return posts
 
+def call_gemini(posts, target_date):
 
-def call_gemini(
-    posts,
-    target_date
-):
+    import time
 
     posts_text = []
 
-    for i, post in enumerate(
-        posts,
-        1
-    ):
-
+    for i, post in enumerate(posts, 1):
         posts_text.append(
             f"""
 ПОСТ {i}
@@ -242,51 +236,31 @@ def call_gemini(
 
 Тебе переданы ВСЕ посты канала за этот день.
 
-Твоя задача — обработать КАЖДЫЙ пост.
+Обработай КАЖДЫЙ пост.
 
-СТРОГИЕ ПРАВИЛА:
+ПРАВИЛА:
 
 1. НЕ ПРОПУСКАЙ ни одного поста.
-
-2. Каждый пост преврати ровно в ОДНУ короткую строку.
-
+2. Каждый пост — ровно одна короткая строка.
 3. Сохрани порядок постов.
-
 4. Не объединяй разные посты.
-
 5. Не удаляй посты.
-
-6. Суть каждого поста передай максимально кратко.
-
-7. Желательная длина — 10–30 слов.
-
-8. Если пост является рекламой, начинай строку с:
-[РЕКЛАМА]
-
-9. Если пост содержит мнение автора,
-не представляй его как установленный факт.
-
-10. Не придумывай информацию,
-которой нет в исходном посте.
-
-11. Каждая строка должна начинаться
-с подходящего эмодзи.
-
-12. После краткого текста добавь
-кликабельную ссылку на оригинальный пост:
+6. Передай суть максимально кратко.
+7. Если это реклама — начинай с [РЕКЛАМА].
+8. Не выдавай мнение автора за факт.
+9. Не придумывай информацию.
+10. Каждая строка начинается с подходящего эмодзи.
+11. В конце каждой строки добавь кликабельную ссылку:
 
 <a href="ССЫЛКА">Ссылка</a>
 
-13. Верни ТОЛЬКО HTML.
-
-Формат:
+Верни ТОЛЬКО:
 
 <ul>
-<li>🔥 Краткое содержание новости. <a href="https://t.me/...">Ссылка</a></li>
-<li>💰 Краткое содержание новости. <a href="https://t.me/...">Ссылка</a></li>
+<li>🔥 Краткое содержание. <a href="https://t.me/...">Ссылка</a></li>
 </ul>
 
-ВОТ ПОСТЫ:
+ПОСТЫ:
 
 {"".join(posts_text)}
 """
@@ -297,35 +271,65 @@ def call_gemini(
         f"?key={GEMINI_API_KEY}"
     )
 
-    response = requests.post(
-        url,
-        json={
-            "contents": [
-                {
-                    "parts": [
-                        {
-                            "text": prompt
-                        }
-                    ]
-                }
-            ],
-            "generationConfig": {
-                "temperature": 0.2,
-                "maxOutputTokens": 12000,
+    max_attempts = 5
+
+    for attempt in range(1, max_attempts + 1):
+
+        print(
+            f"Запрос Gemini. Попытка "
+            f"{attempt}/{max_attempts}"
+        )
+
+        response = requests.post(
+            url,
+            json={
+                "contents": [
+                    {
+                        "parts": [
+                            {
+                                "text": prompt
+                            }
+                        ]
+                    }
+                ],
+                "generationConfig": {
+                    "temperature": 0.2,
+                    "maxOutputTokens": 12000,
+                },
             },
-        },
-        timeout=180,
-    )
+            timeout=180,
+        )
 
-    response.raise_for_status()
+        if response.status_code == 429:
 
-    data = response.json()
+            if attempt == max_attempts:
+                response.raise_for_status()
 
-    return (
-        data["candidates"][0]
-        ["content"]["parts"][0]
-        ["text"]
-        .strip()
+            wait_time = 30 * attempt
+
+            print(
+                f"Gemini вернул 429. "
+                f"Ждём {wait_time} секунд..."
+            )
+
+            time.sleep(wait_time)
+
+            continue
+
+        response.raise_for_status()
+
+        data = response.json()
+
+        return (
+            data["candidates"][0]
+            ["content"]["parts"][0]
+            ["text"]
+            .strip()
+        )
+
+    raise RuntimeError(
+        "Не удалось получить ответ от Gemini "
+        "после нескольких попыток."
     )
 
 
