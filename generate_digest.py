@@ -17,7 +17,7 @@ SOURCE_RSS = (
 OUTPUT_FILE = "feed.xml"
 
 GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
-GEMINI_MODEL = "gemini-2.5-flash"
+GEMINI_MODEL = "gemini-2.0-flash"
 
 MOSCOW_TZ = timezone(timedelta(hours=3))
 
