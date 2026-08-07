@@ -2,44 +2,50 @@ name: Bankrollo Daily Digest
 
 on:
   schedule:
-    # 23:59 по Москве = 20:59 UTC
-    - cron: "59 20 * * *"
-
-  workflow_dispatch:
+    # Каждые 15 минут (время UTC, не московское — это нормально,
+    # часовой пояс обрабатывается внутри generate_digest.py).
+    - cron: "*/15 * * * *"
+  workflow_dispatch: {}
 
 permissions:
   contents: write
 
-jobs:
-  generate:
-    runs-on: ubuntu-latest
+concurrency:
+  group: bankrollo-digest
+  cancel-in-progress: false
 
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Setup Python
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: |
-          pip install requests
+        run: pip install -r requirements.txt
 
-      - name: Generate digest
+      - name: Run digest script
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: python generate_digest.py
+
+      - name: Commit and push changes (if any)
         run: |
-          python generate_digest.py
-
-      - name: Commit RSS
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          git add feed.xml
-
-          git diff --cached --quiet || git commit -m "Update daily Bankrollo digest"
-
-          git push
+          git config user.name "bankrollo-bot"
+          git config user.email "bankrollo-bot@users.noreply.github.com"
+          git add posts_archive.json feed.xml
+          if git diff --cached --quiet; then
+            echo "Нет изменений — коммит не требуется."
+          else
+            git commit -m "Auto-update: $(date -u +'%Y-%m-%d %H:%M UTC')"
+            git pull --rebase --autostash origin "${{ github.ref_name }}"
+            git push
+          fi
