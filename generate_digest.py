@@ -1,634 +1,451 @@
-import os
-import re
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Bankrollo — ежедневный Telegram-дайджест в RSS.
+
+Что делает скрипт при каждом запуске (workflow запускает его каждые 15 минут):
+
+1. СБОР (всегда). Опрашивает два источника Telegram-фида канала, находит
+   посты, которых ещё нет в локальном архиве posts_archive.json, и
+   добавляет их туда. Это накопительное хранилище — именно оно решает
+   проблему "источник отдаёт только последние N постов": даже если в
+   какой-то момент источник урезан, мы уже подобрали более старые посты
+   на предыдущих опросах.
+
+2. СБОРКА ДАЙДЖЕСТА (только в окне 00:00–05:59 по Москве). Берёт из
+   архива все посты за ПРЕДЫДУЩИЙ календарный день (по Москве), просит
+   LLM (Groq, бесплатно) выдать по одному предложению-резюме на пост
+   ОДНИМ запросом на весь день (не по одному запросу на пост — это и
+   было причиной 429). Если LLM недоступен — использует алгоритмическое
+   резюме (первое предложение поста), пайплайн никогда не падает из-за
+   внешнего API. Результат добавляется как один <item> в feed.xml.
+   Если запись за эту дату уже есть — ничего не делает (защита от
+   дублей при повторных запусках).
+
+feed.xml никогда не перезаписывается "сырыми" данными — новая версия
+сначала пишется во временный файл и проверяется на валидность XML,
+и только после этого заменяет старый файл.
+"""
+
 import html
-from datetime import datetime, timedelta, timezone
-from email.utils import parsedate_to_datetime
-import xml.etree.ElementTree as ET
+import json
+import re
+import sys
+import time
+import os
+from datetime import datetime, timedelta, date, time as dt_time
+from pathlib import Path
+from xml.etree import ElementTree as ET
+from zoneinfo import ZoneInfo
 
+import feedparser
 import requests
+from bs4 import BeautifulSoup
+from feedgen.feed import FeedGenerator
+
+# --------------------------------------------------------------------------
+# НАСТРОЙКИ — при необходимости можно менять
+# --------------------------------------------------------------------------
+
+CHANNEL = "bankrollo"
+
+SOURCES = [
+    f"https://wtf.roflcopter.fr/rss-bridge/?action=display&bridge=Telegram&username={CHANNEL}&format=Atom",
+    f"http://tg.i-c-a.su/rss/{CHANNEL}",
+]
+
+# Если вы включите GitHub Pages или иначе разместите публичный feed.xml,
+# можно указать сюда его адрес — это улучшит совместимость с некоторыми
+# читалками (необязательно).
+FEED_PUBLIC_URL = ""
+
+ARCHIVE_PATH = Path("posts_archive.json")
+FEED_PATH = Path("feed.xml")
+
+RETENTION_DAYS = 90          # сколько дней хранить записи в публичном feed.xml
+ARCHIVE_KEEP_DAYS = 100       # сколько дней хранить сырые посты в архиве (запас)
+
+# Окно по московскому времени, в которое можно собирать дайджест за
+# ВЧЕРА. Специально широкое (6 часов), чтобы задержка запуска GitHub
+# Actions не привела к пропуску дня.
+DIGEST_WINDOW_START_HOUR = 0
+DIGEST_WINDOW_END_HOUR = 6
+
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "").strip()
+GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
+# Пробуем модели по очереди: если одна перестанет существовать (404) или
+# будет недоступна, пробуем следующую — так мы не повторим ситуацию с
+# Gemini, где скрипт был жёстко привязан к одному имени модели.
+GROQ_MODELS = ["llama-3.3-70b-versatile", "openai/gpt-oss-120b", "llama-3.1-8b-instant"]
+
+REQUEST_TIMEOUT = 25
+MAX_RETRIES = 3
+BACKOFF_BASE = 2  # секунд
+
+MSK = ZoneInfo("Europe/Moscow")
+UTC = ZoneInfo("UTC")
 
 
-# RSS Bridge — источник постов Telegram
-SOURCE_RSS = (
-    "https://wtf.roflcopter.fr/rss-bridge/"
-    "?action=display&bridge=Telegram&username=bankrollo&format=Atom"
-)
+# --------------------------------------------------------------------------
+# ВСПОМОГАТЕЛЬНОЕ
+# --------------------------------------------------------------------------
 
-OUTPUT_FILE = "feed.xml"
-
-GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
-GEMINI_MODEL = "gemini-2.0-flash"
-
-MOSCOW_TZ = timezone(timedelta(hours=3))
+def log(msg: str) -> None:
+    ts = datetime.now(MSK).strftime("%Y-%m-%d %H:%M:%S MSK")
+    print(f"[{ts}] {msg}", flush=True)
 
 
-def get_rss():
-    response = requests.get(
-        SOURCE_RSS,
-        timeout=60,
-        headers={
-            "User-Agent": "Mozilla/5.0"
-        },
-    )
-
-    response.raise_for_status()
-    return response.text
-
-
-def clean_text(text):
-    text = html.unescape(text or "")
-    text = re.sub(r"<[^>]+>", " ", text)
-    text = re.sub(r"\s+", " ", text)
-    return text.strip()
-
-
-def parse_date(value):
-    if not value:
+def extract_msgid(link: str):
+    """Достаёт числовой ID сообщения из ссылки на пост Telegram, если возможно."""
+    if not link:
         return None
+    cleaned = link.strip().rstrip("/")
+    m = re.search(r"/(\d+)(?:[?#].*)?$", cleaned)
+    return int(m.group(1)) if m else None
 
-    value = value.strip()
 
-    # RFC 822 / RSS date
+def clean_text(raw_html: str) -> str:
+    text = BeautifulSoup(raw_html or "", "html.parser").get_text(separator=" ", strip=True)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
+
+
+def format_date_ru(iso_date_str: str) -> str:
+    d = date.fromisoformat(iso_date_str)
+    return d.strftime("%d.%m.%Y")
+
+
+def algorithmic_summary(text: str) -> str:
+    """Резервный вариант без LLM: первое предложение поста, аккуратно обрезанное."""
+    text = (text or "").strip()
+    if not text:
+        return "Новый пост в канале."
+    parts = re.split(r"(?<=[.!?])\s+", text, maxsplit=1)
+    first = parts[0] if parts else text
+    if len(first) > 220:
+        first = first[:217].rstrip() + "..."
+    return first
+
+
+# --------------------------------------------------------------------------
+# ЭТАП 1: СБОР ПОСТОВ
+# --------------------------------------------------------------------------
+
+def fetch_source(url: str):
     try:
-        return parsedate_to_datetime(value).astimezone(MOSCOW_TZ)
-    except Exception:
-        pass
-
-    # ISO date
-    try:
-        dt = datetime.fromisoformat(
-            value.replace("Z", "+00:00")
-        )
-
-        if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
-
-        return dt.astimezone(MOSCOW_TZ)
-
-    except Exception:
-        return None
-
-
-def parse_feed(xml_text):
-    root = ET.fromstring(xml_text)
-
-    posts = []
-
-    # Определяем RSS или Atom
-    is_atom = root.tag.endswith("feed")
-
-    if is_atom:
-
-        # Atom namespace
-        namespace = ""
-
-        if "}" in root.tag:
-            namespace = root.tag.split("}")[0] + "}"
-
-        entries = root.findall(f"{namespace}entry")
-
-        for entry in entries:
-
-            title_element = entry.find(
-                f"{namespace}title"
-            )
-
-            content_element = entry.find(
-                f"{namespace}content"
-            )
-
-            summary_element = entry.find(
-                f"{namespace}summary"
-            )
-
-            published_element = entry.find(
-                f"{namespace}published"
-            )
-
-            updated_element = entry.find(
-                f"{namespace}updated"
-            )
-
-            title = (
-                title_element.text
-                if title_element is not None
-                else ""
-            )
-
-            if content_element is not None:
-                text = "".join(
-                    content_element.itertext()
-                )
-            elif summary_element is not None:
-                text = "".join(
-                    summary_element.itertext()
-                )
-            else:
-                text = ""
-
-            date_text = ""
-
-            if published_element is not None:
-                date_text = published_element.text or ""
-
-            elif updated_element is not None:
-                date_text = updated_element.text or ""
-
-            post_date = parse_date(date_text)
-
-            # Получаем ссылку на Telegram
-            link = ""
-
-            for link_element in entry.findall(
-                f"{namespace}link"
-            ):
-                href = link_element.attrib.get(
-                    "href",
-                    ""
-                )
-
-                if href:
-                    link = href
-                    break
-
-            if link:
-                posts.append(
-                    {
-                        "title": clean_text(title),
-                        "text": clean_text(text),
-                        "link": link,
-                        "date": post_date,
-                    }
-                )
-
-    else:
-
-        # Обычный RSS
-        for item in root.findall(".//item"):
-
-            title = item.findtext(
-                "title",
-                ""
-            )
-
-            description = item.findtext(
-                "description",
-                ""
-            )
-
-            link = item.findtext(
-                "link",
-                ""
-            )
-
-            pub_date = item.findtext(
-                "pubDate",
-                ""
-            )
-
-            post_date = parse_date(
-                pub_date
-            )
-
-            if link:
-                posts.append(
-                    {
-                        "title": clean_text(title),
-                        "text": clean_text(
-                            description
-                        ),
-                        "link": link.strip(),
-                        "date": post_date,
-                    }
-                )
-
-    return posts
-
-def call_gemini(posts, target_date):
-
-    import time
-
-    posts_text = []
-
-    for i, post in enumerate(posts, 1):
-        posts_text.append(
-            f"""
-ПОСТ {i}
-
-Заголовок:
-{post["title"]}
-
-Текст:
-{post["text"]}
-
-Ссылка:
-{post["link"]}
-
-"""
-        )
-
-    prompt = f"""
-Ты редактор ежедневного дайджеста Telegram-канала
-«Банки, деньги, два офшора» (Bankrollo).
-
-Дата дайджеста:
-{target_date.strftime("%d.%m.%Y")}
-
-Тебе переданы ВСЕ посты канала за этот день.
-
-Обработай КАЖДЫЙ пост.
-
-ПРАВИЛА:
-
-1. НЕ ПРОПУСКАЙ ни одного поста.
-2. Каждый пост — ровно одна короткая строка.
-3. Сохрани порядок постов.
-4. Не объединяй разные посты.
-5. Не удаляй посты.
-6. Передай суть максимально кратко.
-7. Если это реклама — начинай с [РЕКЛАМА].
-8. Не выдавай мнение автора за факт.
-9. Не придумывай информацию.
-10. Каждая строка начинается с подходящего эмодзи.
-11. В конце каждой строки добавь кликабельную ссылку:
-
-<a href="ССЫЛКА">Ссылка</a>
-
-Верни ТОЛЬКО:
-
-<ul>
-<li>🔥 Краткое содержание. <a href="https://t.me/...">Ссылка</a></li>
-</ul>
-
-ПОСТЫ:
-
-{"".join(posts_text)}
-"""
-
-    url = (
-        "https://generativelanguage.googleapis.com/"
-        f"v1beta/models/{GEMINI_MODEL}:generateContent"
-        f"?key={GEMINI_API_KEY}"
-    )
-
-    max_attempts = 5
-
-    for attempt in range(1, max_attempts + 1):
-
-        print(
-            f"Запрос Gemini. Попытка "
-            f"{attempt}/{max_attempts}"
-        )
-
-        response = requests.post(
+        resp = requests.get(
             url,
-            json={
-                "contents": [
-                    {
-                        "parts": [
-                            {
-                                "text": prompt
-                            }
-                        ]
-                    }
-                ],
-                "generationConfig": {
-                    "temperature": 0.2,
-                    "maxOutputTokens": 12000,
-                },
-            },
-            timeout=180,
+            timeout=REQUEST_TIMEOUT,
+            headers={"User-Agent": "Mozilla/5.0 (compatible; BankrolloDigestBot/1.0)"},
         )
+        resp.raise_for_status()
+        parsed = feedparser.parse(resp.content)
+        if parsed.bozo and not parsed.entries:
+            log(f"Источник вернул некорректный фид (bozo) и без записей: {url}")
+            return None
+        return parsed
+    except Exception as e:
+        log(f"Не удалось получить источник {url}: {e}")
+        return None
 
-        if response.status_code == 429:
 
-            if attempt == max_attempts:
-                response.raise_for_status()
+def load_archive() -> dict:
+    if not ARCHIVE_PATH.exists():
+        return {}
+    try:
+        return json.loads(ARCHIVE_PATH.read_text(encoding="utf-8"))
+    except Exception as e:
+        log(f"Не удалось прочитать {ARCHIVE_PATH}, начинаю с пустого архива: {e}")
+        return {}
 
-            wait_time = 30 * attempt
 
-            print(
-                f"Gemini вернул 429. "
-                f"Ждём {wait_time} секунд..."
-            )
+def prune_archive(archive: dict) -> dict:
+    cutoff = (datetime.now(MSK).date() - timedelta(days=ARCHIVE_KEEP_DAYS)).isoformat()
+    return {k: v for k, v in archive.items() if v.get("date", "9999-99-99") >= cutoff}
 
-            time.sleep(wait_time)
 
+def collect_posts() -> dict:
+    archive = load_archive()
+    new_count = 0
+
+    for url in SOURCES:
+        parsed = fetch_source(url)
+        if not parsed or not getattr(parsed, "entries", None):
             continue
 
-        response.raise_for_status()
+        for entry in parsed.entries:
+            link = (entry.get("link") or "").strip()
+            if not link:
+                continue
 
-        data = response.json()
+            msgid = extract_msgid(link)
+            key = f"{CHANNEL}:{msgid}" if msgid is not None else link
+            if key in archive:
+                continue
 
-        return (
-            data["candidates"][0]
-            ["content"]["parts"][0]
-            ["text"]
-            .strip()
-        )
+            pub_dt = None
+            if getattr(entry, "published_parsed", None):
+                pub_dt = datetime(*entry.published_parsed[:6], tzinfo=UTC)
+            elif getattr(entry, "updated_parsed", None):
+                pub_dt = datetime(*entry.updated_parsed[:6], tzinfo=UTC)
+            else:
+                pub_dt = datetime.now(UTC)
 
-    raise RuntimeError(
-        "Не удалось получить ответ от Gemini "
-        "после нескольких попыток."
-    )
+            raw = entry.get("summary", "")
+            if not raw and entry.get("content"):
+                raw = entry["content"][0].get("value", "")
+            text = clean_text(raw)
+            if not text:
+                text = "(пост без текста, см. оригинал)"
 
+            post_date_msk = pub_dt.astimezone(MSK).date().isoformat()
 
-def create_rss(
-    digest_date,
-    content
-):
-
-    # Если RSS уже существует —
-    # загружаем его
-    if os.path.exists(
-        OUTPUT_FILE
-    ):
-
-        try:
-
-            tree = ET.parse(
-                OUTPUT_FILE
-            )
-
-            root = tree.getroot()
-
-            channel = root.find(
-                "channel"
-            )
-
-            if channel is None:
-
-                channel = ET.SubElement(
-                    root,
-                    "channel"
-                )
-
-        except Exception:
-
-            root = ET.Element(
-                "rss",
-                {
-                    "version": "2.0"
-                }
-            )
-
-            channel = ET.SubElement(
-                root,
-                "channel"
-            )
-
-            tree = ET.ElementTree(
-                root
-            )
-
-    else:
-
-        root = ET.Element(
-            "rss",
-            {
-                "version": "2.0"
+            archive[key] = {
+                "date": post_date_msk,
+                "link": link,
+                "text": text,
+                "msgid": msgid,
+                "ts": pub_dt.astimezone(UTC).isoformat(),
             }
-        )
+            new_count += 1
 
-        channel = ET.SubElement(
-            root,
-            "channel"
-        )
+    archive = prune_archive(archive)
+    ARCHIVE_PATH.write_text(json.dumps(archive, ensure_ascii=False, indent=2), encoding="utf-8")
+    log(f"Собрано новых постов за этот запуск: {new_count}. Всего в архиве: {len(archive)}.")
+    return archive
 
-        tree = ET.ElementTree(
-            root
-        )
 
-    # Заголовок RSS
-    if channel.find(
-        "title"
-    ) is None:
+# --------------------------------------------------------------------------
+# ЭТАП 2: РЕЗЮМЕ ЧЕРЕЗ GROQ (ОДИН ЗАПРОС НА ВЕСЬ ДЕНЬ) С ФОЛБЭКОМ
+# --------------------------------------------------------------------------
 
-        element = ET.SubElement(
-            channel,
-            "title"
-        )
+def _call_groq_once(model: str, prompt: str):
+    body = {
+        "model": model,
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0.3,
+        "max_tokens": 2000,
+    }
+    headers = {
+        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Content-Type": "application/json",
+    }
+    resp = requests.post(GROQ_URL, headers=headers, json=body, timeout=REQUEST_TIMEOUT)
+    return resp
 
-        element.text = (
-            "Bankrollo — ежедневный дайджест"
-        )
 
-    # Ссылка на Telegram
-    if channel.find(
-        "link"
-    ) is None:
+def summarize_batch_groq(posts: list):
+    """Пытается получить резюме для всех постов дня ОДНИМ запросом.
+    Возвращает список строк той же длины, что posts, либо None при провале."""
+    if not GROQ_API_KEY:
+        log("GROQ_API_KEY не задан — пропускаю LLM, будет использовано алгоритмическое резюме.")
+        return None
 
-        element = ET.SubElement(
-            channel,
-            "link"
-        )
-
-        element.text = (
-            "https://t.me/bankrollo"
-        )
-
-    # Описание
-    if channel.find(
-        "description"
-    ) is None:
-
-        element = ET.SubElement(
-            channel,
-            "description"
-        )
-
-        element.text = (
-            "Краткий ежедневный дайджест "
-            "постов Telegram-канала Bankrollo"
-        )
-
-    date_string = digest_date.strftime(
-        "%Y-%m-%d"
+    numbered = "\n".join(f"{i + 1}. {p['text'][:600]}" for i, p in enumerate(posts))
+    prompt = (
+        "Ты помогаешь составить новостной дайджест Telegram-канала. "
+        f"Ниже приведены {len(posts)} постов, пронумерованных по порядку. "
+        "Для КАЖДОГО поста напиши ровно одно короткое предложение на русском языке, "
+        "передающее суть новости, и добавь в начало предложения один подходящий по "
+        "смыслу эмодзи. Верни ТОЛЬКО валидный JSON-массив строк, без каких-либо "
+        f"пояснений и markdown-разметки, ровно {len(posts)} элементов в том же порядке, "
+        "в котором идут посты.\n\nПосты:\n" + numbered
     )
 
-    guid_value = (
-        f"bankrollo-digest-{date_string}"
-    )
+    for model in GROQ_MODELS:
+        for attempt in range(1, MAX_RETRIES + 1):
+            try:
+                resp = _call_groq_once(model, prompt)
+            except Exception as e:
+                log(f"Groq: ошибка соединения (модель {model}, попытка {attempt}): {e}")
+                time.sleep(BACKOFF_BASE ** attempt)
+                continue
 
-    # Проверяем, нет ли уже дайджеста
-    for item in channel.findall(
-        "item"
-    ):
+            if resp.status_code == 404:
+                log(f"Groq: модель {model} недоступна (404) — пробую следующую модель.")
+                break  # к следующей модели, без повторов на этой
 
-        guid = item.findtext(
-            "guid",
-            ""
-        )
+            if resp.status_code == 429:
+                wait = BACKOFF_BASE ** attempt
+                log(f"Groq: лимит запросов (429) для модели {model}, "
+                    f"повтор через {wait}s (попытка {attempt}/{MAX_RETRIES}).")
+                time.sleep(wait)
+                continue
 
-        if guid == guid_value:
+            if resp.status_code >= 400:
+                log(f"Groq: ошибка {resp.status_code} для модели {model}: {resp.text[:300]}")
+                time.sleep(BACKOFF_BASE ** attempt)
+                continue
 
-            print(
-                "Дайджест за эту дату "
-                "уже существует."
-            )
+            try:
+                data = resp.json()
+                content = data["choices"][0]["message"]["content"].strip()
+                content = re.sub(r"^```(json)?|```$", "", content, flags=re.MULTILINE).strip()
+                summaries = json.loads(content)
+                if isinstance(summaries, list) and len(summaries) == len(posts):
+                    log(f"Groq: резюме успешно получены (модель {model}).")
+                    return [str(s).strip() for s in summaries]
+                log(f"Groq: неожиданный формат ответа (модель {model}), пробую ещё раз.")
+            except Exception as e:
+                log(f"Groq: не удалось разобрать ответ (модель {model}): {e}")
+            time.sleep(BACKOFF_BASE ** attempt)
 
-            return
+    log("Groq: все модели и попытки исчерпаны — использую алгоритмическое резюме.")
+    return None
 
-    # Создаём новую запись
-    item = ET.Element(
-        "item"
-    )
 
-    title = ET.SubElement(
-        item,
-        "title"
-    )
+# --------------------------------------------------------------------------
+# ЭТАП 3: СБОРКА ДАЙДЖЕСТА И feed.xml
+# --------------------------------------------------------------------------
 
-    title.text = (
-        "Bankrollo — новости за "
-        f"{digest_date.strftime('%d.%m.%Y')}"
-    )
-
-    link = ET.SubElement(
-        item,
-        "link"
-    )
-
-    link.text = (
-        "https://t.me/bankrollo"
-    )
-
-    guid = ET.SubElement(
-        item,
-        "guid",
-        {
-            "isPermaLink": "false"
-        }
-    )
-
-    guid.text = guid_value
-
-    description = ET.SubElement(
-        item,
-        "description"
-    )
-
-    # CDATA вручную
-    description.text = (
-        "<![CDATA["
-        + content
-        + "]]>"
-    )
-
-    pub_date = ET.SubElement(
-        item,
-        "pubDate"
-    )
-
-    now = datetime.now(
-        timezone.utc
-    )
-
-    pub_date.text = now.strftime(
-        "%a, %d %b %Y %H:%M:%S GMT"
-    )
-
-    # Новые записи сверху
-    channel.insert(
-        0,
-        item
-    )
-
-    # Храним последние 90 дней
-    items = channel.findall(
-        "item"
-    )
-
-    for old_item in items[90:]:
-
-        channel.remove(
-            old_item
-        )
-
-    tree.write(
-        OUTPUT_FILE,
-        encoding="utf-8",
-        xml_declaration=True
+def digest_exists(target_date: str) -> bool:
+    if not FEED_PATH.exists():
+        return False
+    parsed = feedparser.parse(str(FEED_PATH))
+    target_guid = f"digest-{target_date}"
+    return any(
+        e.get("id") == target_guid or e.get("guid") == target_guid
+        for e in parsed.entries
     )
 
 
-def main():
+def format_item_description(posts: list, summaries: list) -> str:
+    parts = []
+    for post, summary in zip(posts, summaries):
+        link_escaped = html.escape(post["link"], quote=True)
+        summary_escaped = html.escape(summary)
+        parts.append(f'{summary_escaped} <a href="{link_escaped}">Ссылка</a>')
+    return "<br/><br/>".join(parts)
 
-    # По умолчанию создаём дайджест
-    # за предыдущий календарный день
-    target_date = (
-        datetime.now(
-            MOSCOW_TZ
-        ).date()
-        - timedelta(
-            days=1
-        )
-    )
 
-    print(
-        f"Создаём дайджест за "
-        f"{target_date}"
-    )
+def load_existing_items(cutoff_date: date) -> list:
+    items = []
+    if not FEED_PATH.exists():
+        return items
+    parsed = feedparser.parse(str(FEED_PATH))
+    for e in parsed.entries:
+        guid = e.get("id") or e.get("guid") or e.get("link")
+        pub_dt = None
+        if getattr(e, "published_parsed", None):
+            pub_dt = datetime(*e.published_parsed[:6], tzinfo=UTC)
+        elif getattr(e, "updated_parsed", None):
+            pub_dt = datetime(*e.updated_parsed[:6], tzinfo=UTC)
+        if pub_dt is None or pub_dt.date() < cutoff_date:
+            continue
+        items.append({
+            "guid": guid,
+            "title": e.get("title", ""),
+            "link": e.get("link", "https://t.me/bankrollo"),
+            "description": e.get("description", e.get("summary", "")),
+            "pub_dt": pub_dt,
+        })
+    return items
 
-    # Загружаем Atom/RSS
-    xml_text = get_rss()
 
-    # Разбираем ленту
-    posts = parse_feed(
-        xml_text
-    )
+def rebuild_feed(existing_items: list, new_item: dict) -> FeedGenerator:
+    fg = FeedGenerator()
+    fg.title("Bankrollo — ежедневный дайджест")
+    fg.link(href="https://t.me/bankrollo", rel="alternate")
+    if FEED_PUBLIC_URL:
+        fg.link(href=FEED_PUBLIC_URL, rel="self")
+    fg.description("Автоматический ежедневный дайджест Telegram-канала Bankrollo")
+    fg.language("ru")
 
-    print(
-        f"Получено постов из источника: "
-        f"{len(posts)}"
-    )
+    all_items = list(existing_items)
+    if new_item:
+        all_items.append(new_item)
 
-    # Отбираем посты строго за нужный день
-    posts_for_digest = [
-        post
-        for post in posts
-        if post["date"] is not None
-        and post["date"].date()
-        == target_date
-    ]
+    seen = set()
+    unique_items = []
+    for it in all_items:
+        if it["guid"] in seen:
+            continue
+        seen.add(it["guid"])
+        unique_items.append(it)
+    unique_items.sort(key=lambda x: x["pub_dt"], reverse=True)
 
-    print(
-        f"Постов за "
-        f"{target_date}: "
-        f"{len(posts_for_digest)}"
-    )
+    for it in unique_items:
+        fe = fg.add_entry()
+        fe.id(it["guid"])
+        fe.guid(it["guid"], permalink=False)
+        fe.title(it["title"])
+        fe.link(href=it["link"])
+        fe.description(it["description"])
+        fe.pubDate(it["pub_dt"])
 
-    if not posts_for_digest:
+    return fg
 
-        print(
-            "Постов за нужную дату "
-            "не найдено."
-        )
 
+def write_feed_atomically(fg: FeedGenerator) -> None:
+    tmp_path = FEED_PATH.with_suffix(".tmp")
+    fg.rss_file(str(tmp_path), pretty=True)
+    try:
+        ET.parse(tmp_path)
+    except ET.ParseError as e:
+        tmp_path.unlink(missing_ok=True)
+        raise RuntimeError(f"Сгенерированный feed.xml не прошёл проверку XML: {e}") from e
+    tmp_path.replace(FEED_PATH)
+
+
+def try_build_digest(archive: dict) -> None:
+    now_msk = datetime.now(MSK)
+
+    if not (DIGEST_WINDOW_START_HOUR <= now_msk.hour < DIGEST_WINDOW_END_HOUR):
+        log("Сейчас не окно сборки дайджеста (00:00–05:59 MSK) — только сбор постов на этом запуске.")
         return
 
-    # Сортировка от старых к новым
-    posts_for_digest.sort(
-        key=lambda post: post["date"]
-    )
+    target_date = (now_msk.date() - timedelta(days=1)).isoformat()
 
-    # Генерируем дайджест
-    digest = call_gemini(
-        posts_for_digest,
-        target_date
-    )
+    if digest_exists(target_date):
+        log(f"Дайджест за {target_date} уже есть в feed.xml — пропускаю (защита от дублей).")
+        return
 
-    # Сохраняем RSS
-    create_rss(
-        target_date,
-        digest
-    )
+    posts_today = [v for v in archive.values() if v.get("date") == target_date]
+    if not posts_today:
+        log(f"В архиве нет постов за {target_date} — дайджест не создаётся, feed.xml не трогаю.")
+        return
 
-    print(
-        "RSS успешно обновлён."
-    )
+    posts_today.sort(key=lambda p: (p["msgid"] if p["msgid"] is not None else 0, p["ts"]))
+    log(f"Собираю дайджест за {target_date}: {len(posts_today)} посто(в).")
+
+    summaries = summarize_batch_groq(posts_today)
+    if not summaries:
+        summaries = [algorithmic_summary(p["text"]) for p in posts_today]
+
+    description = format_item_description(posts_today, summaries)
+    title = f"Bankrollo — новости за {format_date_ru(target_date)}"
+
+    new_item = {
+        "guid": f"digest-{target_date}",
+        "title": title,
+        "link": "https://t.me/bankrollo",
+        "description": description,
+        "pub_dt": datetime.combine(date.fromisoformat(target_date), dt_time(23, 59, 0), tzinfo=MSK),
+    }
+
+    cutoff_date = now_msk.date() - timedelta(days=RETENTION_DAYS)
+    existing_items = load_existing_items(cutoff_date)
+    fg = rebuild_feed(existing_items, new_item)
+
+    try:
+        write_feed_atomically(fg)
+        log(f"feed.xml обновлён: добавлена запись «{title}».")
+    except Exception as e:
+        log(f"ОШИБКА при записи feed.xml: {e}. Существующий feed.xml НЕ изменён.")
+
+
+# --------------------------------------------------------------------------
+# ТОЧКА ВХОДА
+# --------------------------------------------------------------------------
+
+def main() -> int:
+    log("Запуск: сбор постов…")
+    archive = collect_posts()
+    log("Проверка, не пора ли собрать дайджест за прошедший день…")
+    try_build_digest(archive)
+    log("Готово.")
+    return 0
 
 
 if __name__ == "__main__":
-
-    main()
+    sys.exit(main())
