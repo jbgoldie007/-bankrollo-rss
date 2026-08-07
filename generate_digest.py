@@ -14,7 +14,7 @@ Bankrollo — ежедневный Telegram-дайджест в RSS.
 
 2. СБОРКА ДАЙДЖЕСТА (только в окне 00:00–05:59 по Москве). Берёт из
    архива все посты за ПРЕДЫДУЩИЙ календарный день (по Москве), просит
-   LLM (Groq, бесплатно) выдать по одному предложению-резюме на пост
+   LLM (OpenRouter, бесплатно) выдать по одному предложению-резюме на пост
    ОДНИМ запросом на весь день (не по одному запросу на пост — это и
    было причиной 429). Если LLM недоступен — использует алгоритмическое
    резюме (первое предложение поста), пайплайн никогда не падает из-за
@@ -71,12 +71,19 @@ ARCHIVE_KEEP_DAYS = 100       # сколько дней хранить сыры�
 DIGEST_WINDOW_START_HOUR = 0
 DIGEST_WINDOW_END_HOUR = 6
 
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "").strip()
-GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
-# Пробуем модели по очереди: если одна перестанет существовать (404) или
-# будет недоступна, пробуем следующую — так мы не повторим ситуацию с
-# Gemini, где скрипт был жёстко привязан к одному имени модели.
-GROQ_MODELS = ["llama-3.3-70b-versatile", "openai/gpt-oss-120b", "llama-3.1-8b-instant"]
+OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "").strip()
+OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+# Пробуем модели по очереди. Первая — "openrouter/free", это
+# автомаршрутизатор самого OpenRouter: он сам выбирает, какая бесплатная
+# модель сейчас доступна, что снижает риск 404 из-за снятой с продажи
+# модели (список бесплатных моделей на OpenRouter меняется чаще, чем у
+# большинства других провайдеров). Дальше — пара конкретных моделей на
+# случай проблем с автомаршрутизатором.
+OPENROUTER_MODELS = [
+    "openrouter/free",
+    "meta-llama/llama-3.3-70b-instruct:free",
+    "openai/gpt-oss-20b:free",
+]
 
 REQUEST_TIMEOUT = 25
 MAX_RETRIES = 3
@@ -216,10 +223,10 @@ def collect_posts() -> dict:
 
 
 # --------------------------------------------------------------------------
-# ЭТАП 2: РЕЗЮМЕ ЧЕРЕЗ GROQ (ОДИН ЗАПРОС НА ВЕСЬ ДЕНЬ) С ФОЛБЭКОМ
+# ЭТАП 2: РЕЗЮМЕ ЧЕРЕЗ OPENROUTER (ОДИН ЗАПРОС НА ВЕСЬ ДЕНЬ) С ФОЛБЭКОМ
 # --------------------------------------------------------------------------
 
-def _call_groq_once(model: str, prompt: str):
+def _call_openrouter_once(model: str, prompt: str):
     body = {
         "model": model,
         "messages": [{"role": "user", "content": prompt}],
@@ -227,18 +234,22 @@ def _call_groq_once(model: str, prompt: str):
         "max_tokens": 2000,
     }
     headers = {
-        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
         "Content-Type": "application/json",
+        # Рекомендованные OpenRouter заголовки (не обязательны, но помогают
+        # с диагностикой и статистикой на стороне OpenRouter).
+        "HTTP-Referer": "https://github.com/",
+        "X-Title": "Bankrollo Digest Bot",
     }
-    resp = requests.post(GROQ_URL, headers=headers, json=body, timeout=REQUEST_TIMEOUT)
+    resp = requests.post(OPENROUTER_URL, headers=headers, json=body, timeout=REQUEST_TIMEOUT)
     return resp
 
 
-def summarize_batch_groq(posts: list):
+def summarize_batch_openrouter(posts: list):
     """Пытается получить резюме для всех постов дня ОДНИМ запросом.
     Возвращает список строк той же длины, что posts, либо None при провале."""
-    if not GROQ_API_KEY:
-        log("GROQ_API_KEY не задан — пропускаю LLM, будет использовано алгоритмическое резюме.")
+    if not OPENROUTER_API_KEY:
+        log("OPENROUTER_API_KEY не задан — пропускаю LLM, будет использовано алгоритмическое резюме.")
         return None
 
     numbered = "\n".join(f"{i + 1}. {p['text'][:600]}" for i, p in enumerate(posts))
@@ -252,28 +263,28 @@ def summarize_batch_groq(posts: list):
         "в котором идут посты.\n\nПосты:\n" + numbered
     )
 
-    for model in GROQ_MODELS:
+    for model in OPENROUTER_MODELS:
         for attempt in range(1, MAX_RETRIES + 1):
             try:
-                resp = _call_groq_once(model, prompt)
+                resp = _call_openrouter_once(model, prompt)
             except Exception as e:
-                log(f"Groq: ошибка соединения (модель {model}, попытка {attempt}): {e}")
+                log(f"OpenRouter: ошибка соединения (модель {model}, попытка {attempt}): {e}")
                 time.sleep(BACKOFF_BASE ** attempt)
                 continue
 
             if resp.status_code == 404:
-                log(f"Groq: модель {model} недоступна (404) — пробую следующую модель.")
+                log(f"OpenRouter: модель {model} недоступна (404) — пробую следующую модель.")
                 break  # к следующей модели, без повторов на этой
 
             if resp.status_code == 429:
                 wait = BACKOFF_BASE ** attempt
-                log(f"Groq: лимит запросов (429) для модели {model}, "
+                log(f"OpenRouter: лимит запросов (429) для модели {model}, "
                     f"повтор через {wait}s (попытка {attempt}/{MAX_RETRIES}).")
                 time.sleep(wait)
                 continue
 
             if resp.status_code >= 400:
-                log(f"Groq: ошибка {resp.status_code} для модели {model}: {resp.text[:300]}")
+                log(f"OpenRouter: ошибка {resp.status_code} для модели {model}: {resp.text[:300]}")
                 time.sleep(BACKOFF_BASE ** attempt)
                 continue
 
@@ -283,14 +294,14 @@ def summarize_batch_groq(posts: list):
                 content = re.sub(r"^```(json)?|```$", "", content, flags=re.MULTILINE).strip()
                 summaries = json.loads(content)
                 if isinstance(summaries, list) and len(summaries) == len(posts):
-                    log(f"Groq: резюме успешно получены (модель {model}).")
+                    log(f"OpenRouter: резюме успешно получены (модель {model}).")
                     return [str(s).strip() for s in summaries]
-                log(f"Groq: неожиданный формат ответа (модель {model}), пробую ещё раз.")
+                log(f"OpenRouter: неожиданный формат ответа (модель {model}), пробую ещё раз.")
             except Exception as e:
-                log(f"Groq: не удалось разобрать ответ (модель {model}): {e}")
+                log(f"OpenRouter: не удалось разобрать ответ (модель {model}): {e}")
             time.sleep(BACKOFF_BASE ** attempt)
 
-    log("Groq: все модели и попытки исчерпаны — использую алгоритмическое резюме.")
+    log("OpenRouter: все модели и попытки исчерпаны — использую алгоритмическое резюме.")
     return None
 
 
@@ -408,7 +419,7 @@ def try_build_digest(archive: dict) -> None:
     posts_today.sort(key=lambda p: (p["msgid"] if p["msgid"] is not None else 0, p["ts"]))
     log(f"Собираю дайджест за {target_date}: {len(posts_today)} посто(в).")
 
-    summaries = summarize_batch_groq(posts_today)
+    summaries = summarize_batch_openrouter(posts_today)
     if not summaries:
         summaries = [algorithmic_summary(p["text"]) for p in posts_today]
 
