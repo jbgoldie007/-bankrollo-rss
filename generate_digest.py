@@ -424,7 +424,7 @@ def try_build_digest(archive: dict) -> None:
         summaries = [algorithmic_summary(p["text"]) for p in posts_today]
 
     description = format_item_description(posts_today, summaries)
-    title = f"Bankrollo — новости за {format_date_ru(target_date)}"
+    title = f"Новости за {format_date_ru(target_date)}"
 
     new_item = {
         "guid": f"digest-{target_date}",
