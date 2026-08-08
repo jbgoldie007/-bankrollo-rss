@@ -47,12 +47,60 @@ from feedgen.feed import FeedGenerator
 # НАСТРОЙКИ — при необходимости можно менять
 # --------------------------------------------------------------------------
 
-CHANNEL = "bankrollo"
-
-SOURCES = [
-    f"https://wtf.roflcopter.fr/rss-bridge/?action=display&bridge=Telegram&username={CHANNEL}&format=Atom",
-    f"http://tg.i-c-a.su/rss/{CHANNEL}",
-]
+CHANNELS = {
+    "bankrollo": {
+        "sources": [
+            "https://wtf.roflcopter.fr/rss-bridge/?action=display&bridge=Telegram&username=bankrollo&format=Atom",
+            "http://tg.i-c-a.su/rss/bankrollo",
+        ],
+        "filter": None,  # все посты
+        "title_suffix": "Bankrollo",
+        "combine_posts": False,
+    },
+    "victorstepanych": {
+        "sources": [
+            "https://wtf.roflcopter.fr/rss-bridge/?action=display&bridge=Telegram&username=victorstepanych&format=Atom",
+            "http://tg.i-c-a.su/rss/victorstepanych",
+        ],
+        "filter": lambda text: bool(text.strip()) and len(text) > 50,  # только посты с текстом
+        "title_suffix": "Victor Stepanych",
+        "combine_posts": True,  # объединяем смежные посты
+    },
+    "naeconomila": {
+        "sources": [
+            "https://wtf.roflcopter.fr/rss-bridge/?action=display&bridge=Telegram&username=naeconomila&format=Atom",
+            "http://tg.i-c-a.su/rss/naeconomila",
+        ],
+        "filter": lambda text: not any(
+            kw in text.lower()
+            for kw in [
+                "вклад", "вкладов", "откроить карт", "бонус", "сертификат",
+                "втб", "халв", "локо", "псб", "газпром", "оператор т2", "барабан",
+            ]
+        ),
+        "title_suffix": "НаЭкономила",
+        "combine_posts": False,
+    },
+    "condottieros": {
+        "sources": [
+            "https://wtf.roflcopter.fr/rss-bridge/?action=display&bridge=Telegram&username=condottieros&format=Atom",
+            "http://tg.i-c-a.su/rss/condottieros",
+        ],
+        "filter": lambda text: (
+            len(text) > 100
+            and not any(
+                phrase in text.lower()
+                for phrase in [
+                    "добрых", "петух", "дискотек", "вам понравится", "круто сделано",
+                    "негр", "жоп", "ебут", "ибица",  # оскорбительный флаф
+                ]
+            )
+            and not re.match(r"^(Небо|Морпеха|Кстати|Всем)\s+", text, re.IGNORECASE)
+        ),
+        "title_suffix": "Condottieros",
+        "combine_posts": False,
+    },
+}
 
 # Если вы включите GitHub Pages или иначе разместите публичный feed.xml,
 # можно указать сюда его адрес — это улучшит совместимость с некоторыми
@@ -175,46 +223,54 @@ def collect_posts() -> dict:
     archive = load_archive()
     new_count = 0
 
-    for url in SOURCES:
-        parsed = fetch_source(url)
-        if not parsed or not getattr(parsed, "entries", None):
-            continue
-
-        for entry in parsed.entries:
-            link = (entry.get("link") or "").strip()
-            if not link:
+    for channel_name, channel_cfg in CHANNELS.items():
+        for url in channel_cfg["sources"]:
+            parsed = fetch_source(url)
+            if not parsed or not getattr(parsed, "entries", None):
                 continue
 
-            msgid = extract_msgid(link)
-            key = f"{CHANNEL}:{msgid}" if msgid is not None else link
-            if key in archive:
-                continue
+            for entry in parsed.entries:
+                link = (entry.get("link") or "").strip()
+                if not link:
+                    continue
 
-            pub_dt = None
-            if getattr(entry, "published_parsed", None):
-                pub_dt = datetime(*entry.published_parsed[:6], tzinfo=UTC)
-            elif getattr(entry, "updated_parsed", None):
-                pub_dt = datetime(*entry.updated_parsed[:6], tzinfo=UTC)
-            else:
-                pub_dt = datetime.now(UTC)
+                msgid = extract_msgid(link)
+                key = f"{channel_name}:{msgid}" if msgid is not None else f"{channel_name}:{link}"
+                if key in archive:
+                    continue
 
-            raw = entry.get("summary", "")
-            if not raw and entry.get("content"):
-                raw = entry["content"][0].get("value", "")
-            text = clean_text(raw)
-            if not text:
-                text = "(пост без текста, см. оригинал)"
+                pub_dt = None
+                if getattr(entry, "published_parsed", None):
+                    pub_dt = datetime(*entry.published_parsed[:6], tzinfo=UTC)
+                elif getattr(entry, "updated_parsed", None):
+                    pub_dt = datetime(*entry.updated_parsed[:6], tzinfo=UTC)
+                else:
+                    pub_dt = datetime.now(UTC)
 
-            post_date_msk = pub_dt.astimezone(MSK).date().isoformat()
+                raw = entry.get("summary", "")
+                if not raw and entry.get("content"):
+                    raw = entry["content"][0].get("value", "")
+                text = clean_text(raw)
+                if not text:
+                    text = "(пост без текста, см. оригинал)"
 
-            archive[key] = {
-                "date": post_date_msk,
-                "link": link,
-                "text": text,
-                "msgid": msgid,
-                "ts": pub_dt.astimezone(UTC).isoformat(),
-            }
-            new_count += 1
+                # Применяем фильтр канала
+                filter_fn = channel_cfg.get("filter")
+                if filter_fn and not filter_fn(text):
+                    log(f"Пост {key} отфильтрован по правилам канала {channel_name}.")
+                    continue
+
+                post_date_msk = pub_dt.astimezone(MSK).date().isoformat()
+
+                archive[key] = {
+                    "channel": channel_name,
+                    "date": post_date_msk,
+                    "link": link,
+                    "text": text,
+                    "msgid": msgid,
+                    "ts": pub_dt.astimezone(UTC).isoformat(),
+                }
+                new_count += 1
 
     archive = prune_archive(archive)
     ARCHIVE_PATH.write_text(json.dumps(archive, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -353,18 +409,19 @@ def load_existing_items(cutoff_date: date) -> list:
     return items
 
 
-def rebuild_feed(existing_items: list, new_item: dict) -> FeedGenerator:
+def rebuild_feed(all_items: list, new_item: dict = None) -> FeedGenerator:
     fg = FeedGenerator()
-    fg.title("Bankrollo — ежедневный дайджест")
+    fg.title("Дайджесты telegram-каналов")
     fg.link(href="https://t.me/bankrollo", rel="alternate")
     if FEED_PUBLIC_URL:
         fg.link(href=FEED_PUBLIC_URL, rel="self")
-    fg.description("Автоматический ежедневный дайджест Telegram-канала Bankrollo")
+    fg.description("Автоматические ежедневные дайджесты из telegram-каналов: Bankrollo, Victor Stepanych, НаЭкономила, Condottieros")
     fg.language("ru")
 
-    all_items = list(existing_items)
     if new_item:
-        all_items.append(new_item)
+        all_items = list(all_items) + [new_item]
+    else:
+        all_items = list(all_items)
 
     seen = set()
     unique_items = []
@@ -407,40 +464,60 @@ def try_build_digest(archive: dict) -> None:
 
     target_date = (now_msk.date() - timedelta(days=1)).isoformat()
 
-    if digest_exists(target_date):
-        log(f"Дайджест за {target_date} уже есть в feed.xml — пропускаю (защита от дублей).")
-        return
+    # Группируем посты по каналам
+    posts_by_channel = {}
+    for channel_name in CHANNELS.keys():
+        posts_by_channel[channel_name] = [
+            v for v in archive.values()
+            if v.get("date") == target_date and v.get("channel") == channel_name
+        ]
 
-    posts_today = [v for v in archive.values() if v.get("date") == target_date]
-    if not posts_today:
+    if not any(posts_by_channel.values()):
         log(f"В архиве нет постов за {target_date} — дайджест не создаётся, feed.xml не трогаю.")
         return
 
-    posts_today.sort(key=lambda p: (p["msgid"] if p["msgid"] is not None else 0, p["ts"]))
-    log(f"Собираю дайджест за {target_date}: {len(posts_today)} посто(в).")
+    new_items = []
+    for channel_name, posts_today in posts_by_channel.items():
+        if not posts_today:
+            continue
 
-    summaries = summarize_batch_openrouter(posts_today)
-    if not summaries:
-        summaries = [algorithmic_summary(p["text"]) for p in posts_today]
+        posts_today.sort(key=lambda p: (p["msgid"] if p["msgid"] is not None else 0, p["ts"]))
+        channel_cfg = CHANNELS[channel_name]
+        log(f"Собираю дайджест за {target_date} канала {channel_name}: {len(posts_today)} посто(в).")
 
-    description = format_item_description(posts_today, summaries)
-    title = f"Новости за {format_date_ru(target_date)}"
+        summaries = summarize_batch_openrouter(posts_today)
+        if not summaries:
+            summaries = [algorithmic_summary(p["text"]) for p in posts_today]
 
-    new_item = {
-        "guid": f"digest-{target_date}",
-        "title": title,
-        "link": "https://t.me/bankrollo",
-        "description": description,
-        "pub_dt": datetime.combine(date.fromisoformat(target_date), dt_time(23, 59, 0), tzinfo=MSK),
-    }
+        description = format_item_description(posts_today, summaries)
+        title = f"{channel_cfg['title_suffix']} — новости за {format_date_ru(target_date)}"
+
+        new_items.append({
+            "guid": f"digest-{channel_name}-{target_date}",
+            "title": title,
+            "link": f"https://t.me/{channel_name}",
+            "description": description,
+            "pub_dt": datetime.combine(date.fromisoformat(target_date), dt_time(23, 59, 0), tzinfo=MSK),
+        })
 
     cutoff_date = now_msk.date() - timedelta(days=RETENTION_DAYS)
     existing_items = load_existing_items(cutoff_date)
-    fg = rebuild_feed(existing_items, new_item)
+    
+    # Проверяем, какие item'ы уже есть (защита от дублей)
+    existing_guids = {item["guid"] for item in existing_items}
+    items_to_add = [item for item in new_items if item["guid"] not in existing_guids]
+
+    if not items_to_add:
+        log(f"Дайджесты за {target_date} уже есть в feed.xml — пропускаю (защита от дублей).")
+        return
+
+    fg = rebuild_feed(existing_items, None)
+    for item in items_to_add:
+        fg = rebuild_feed(existing_items + items_to_add, None)
 
     try:
         write_feed_atomically(fg)
-        log(f"feed.xml обновлён: добавлена запись «{title}».")
+        log(f"feed.xml обновлён: добавлено {len(items_to_add)} дайджестов.")
     except Exception as e:
         log(f"ОШИБКА при записи feed.xml: {e}. Существующий feed.xml НЕ изменён.")
 
