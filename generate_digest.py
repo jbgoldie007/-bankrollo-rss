@@ -62,7 +62,18 @@ CHANNELS = {
             "https://wtf.roflcopter.fr/rss-bridge/?action=display&bridge=Telegram&username=victorstepanych&format=Atom",
             "http://tg.i-c-a.su/rss/victorstepanych",
         ],
-        "filter": lambda text: bool(text.strip()) and len(text) > 50,  # только посты с текстом
+        "filter": lambda text: (
+            bool(text.strip()) and len(text) > 50
+            and not any(
+                kw in text.lower()
+                for kw in [
+                    "помогите", "сбор", "реабилитация", "финанс", "пожертвова",  # благотворительность
+                    "монастыр", "церковь", "храм", "священ", "отец",  # религия
+                    "крипто", "usdt", "bitcoin", "эфир", "блокчейн", "nft",  # крипто
+                    "карта qore", "kyc", "комиссия", "платёж",  # финансовая реклама
+                ]
+            )
+        ),
         "title_suffix": "Victor Stepanych",
         "combine_posts": True,  # объединяем смежные посты
     },
