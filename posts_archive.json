@@ -1524,5 +1524,37 @@
     "text": "Forwarded from Win-Win Уточнение: украинский самолет пытался атаковать Герань ракетой воздух-воздух и случился самоподрыв ракеты. Любопытное нововведение.",
     "msgid": 20358,
     "ts": "2026-08-10T18:33:00+00:00"
+  },
+  "bankrollo:64721": {
+    "channel": "bankrollo",
+    "date": "2026-08-11",
+    "link": "https://t.me/bankrollo/64721",
+    "text": "В России массово продают новые БАДы для похудения с наркотиком — Известия. Издание протестировало четыре популярных средства: Supressa Fast Metabolism, Ultra Lipo 3, Mineral Balance и кофе S Figura Slim. Две независимые лаборатории во всех препаратах нашли сибутрамин. Это сильнодействующее вещество может вызывать тяжелые нарушения психики, проблемы с сердцем и даже привести человека в реанимацию. В каждом БАДе концентрация сибутрамина в два-три раза превышала максимальную дозировку. В России уже есть пострадавшие: у 15-летней девочки из Воронежа появились сильные галлюцинации, которые прошли только после длительного медикаментозного лечения. Препараты продают под видом американских и европейских брендов, хотя на самом деле их делают в маленьком селе в Казахстане. @bankrollo",
+    "msgid": 64721,
+    "ts": "2026-08-10T21:59:01+00:00"
+  },
+  "bankrollo:64720": {
+    "channel": "bankrollo",
+    "date": "2026-08-10",
+    "link": "https://t.me/bankrollo/64720",
+    "text": "This media is not supported in your browser VIEW IN TELEGRAM Шаману никто не подпел на 80-тысячных Лужниках. @bankrollo",
+    "msgid": 64720,
+    "ts": "2026-08-10T20:21:01+00:00"
+  },
+  "condottieros:http://ws.rofl.lan:8118/rss-bridge/?action=display&bridge=Telegram&username=condottieros&format=Atom": {
+    "channel": "condottieros",
+    "date": "2026-08-11",
+    "link": "http://ws.rofl.lan:8118/rss-bridge/?action=display&bridge=Telegram&username=condottieros&format=Atom",
+    "text": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/502 Details Type: HttpException Code: 502 Message: https://t.me/s/condottieros resulted in 502 Bad Gateway File: lib/http.php Line: 36 Trace #0 index.php(73): RssBridge->main() #1 lib/RssBridge.php(39): RssBridge->{closure:RssBridge::main():37}() #2 lib/RssBridge.php(37): BasicAuthMiddleware->__invoke() #3 middlewares/BasicAuthMiddleware.php(13): RssBridge->{closure:RssBridge::main():37}() #4 lib/RssBridge.php(37): CacheMiddleware->__invoke() #5 middlewares/CacheMiddleware.php(44): RssBridge->{closure:RssBridge::main():37}() #6 lib/RssBridge.php(37): ExceptionMiddleware->__invoke() #7 middlewares/ExceptionMiddleware.php(17): RssBridge->{closure:RssBridge::main():37}() #8 lib/RssBridge.php(37): SecurityMiddleware->__invoke() #9 middlewares/SecurityMiddleware.php(19): RssBridge->{closure:RssBridge::main():37}() #10 lib/RssBridge.php(37): MaintenanceMiddleware->__invoke() #11 middlewares/MaintenanceMiddleware.php(10): RssBridge->{closure:RssBridge::main():37}() #12 lib/RssBridge.php(37): TokenAuthenticationMiddleware->__invoke() #13 middlewares/TokenAuthenticationMiddleware.php(10): RssBridge->{closure:RssBridge::main():33}() #14 lib/RssBridge.php(34): DisplayAction->__invoke() #15 actions/DisplayAction.php(54): DisplayAction->createResponse() #16 actions/DisplayAction.php(89): TelegramBridge->collectData() #17 bridges/TelegramBridge.php(56): getSimpleHTMLDOM() #18 lib/contents.php(151): getContents() #19 lib/contents.php(106): HttpException::fromResponse() #20 lib/http.php(36) Context Query: action=display&bridge=Telegram&username=condottieros&format=Atom Version: 2025-08-05 OS: Linux PHP: 8.4.23 Go back Find similar bugs Create GitHub Issue VerifiedJoseph",
+    "msgid": null,
+    "ts": "2026-08-11T04:53:15+00:00"
+  },
+  "condottieros:20359": {
+    "channel": "condottieros",
+    "date": "2026-08-11",
+    "link": "https://t.me/condottieros/20359",
+    "text": "Пока хохол пиарится на складах WB, мы ночью уничтожили еще предприятие в Киеве. Telegram Герань Цветущая ™ Ночью Киев принимал Цирконы и \"баллистические ракеты из Северной Кореи, которые фиксируются уже после того, как достигают цели\". Удар пришёлся по целям в Шевченковском районе. На месте прилёта сильный пожар.",
+    "msgid": 20359,
+    "ts": "2026-08-11T04:33:40+00:00"
   }
 }
