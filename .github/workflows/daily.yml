@@ -2,9 +2,11 @@ name: Bankrollo Daily Digest
 
 on:
   schedule:
-    # Каждые 15 минут (время UTC, не московское — это нормально,
-    # часовой пояс обрабатывается внутри generate_digest.py).
+    # Каждые 15 минут для сбора постов
     - cron: "*/15 * * * *"
+    # Дополнительный гарантированный запуск в 01:00 MSK (22:00 UTC предыдущего дня)
+    # для создания дайджеста за прошедший день
+    - cron: "0 22 * * *"
   workflow_dispatch: {}
 
 permissions:
@@ -48,4 +50,3 @@ jobs:
             git commit -m "Auto-update: $(date -u +'%Y-%m-%d %H:%M UTC')"
             git pull --rebase --autostash origin "${{ github.ref_name }}"
             git push
-          fi
