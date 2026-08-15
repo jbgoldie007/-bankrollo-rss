@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<rss xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" version="2.0">
+  <channel>
+    <title>Condottieros — ежедневный дайджест</title>
+    <link>https://t.me/condottieros</link>
+    <description>Автоматический ежедневный дайджест Telegram-канала Condottieros</description>
+    <docs>http://www.rssboard.org/rss-specification</docs>
+    <generator>python-feedgen</generator>
+    <language>ru</language>
+    <lastBuildDate>Sat, 15 Aug 2026 21:49:36 +0000</lastBuildDate>
+    <item>
+      <title>Condottieros — новости за 15.08.2026</title>
+      <link>https://t.me/condottieros</link>
+      <description>🛥️ МИД РФ просит Помидора объяснить, зачем хохлам оружие, и разбудить Лаврова, который спит на яхте в Босфоре. &lt;a href="https://t.me/condottieros/20426"&gt;Ссылка&lt;/a&gt;&lt;br/&gt;&lt;br/&gt;🌞 В субботних Telegram‑каналах говорят, что у «hoхла» всё плохо, но на деле у Зеленского и его «мастера‑потрошителей» всё хорошо, а свет, вода и продукты из Европы в избытке. &lt;a href="https://t.me/condottieros/20427"&gt;Ссылка&lt;/a&gt;</description>
+      <guid isPermaLink="false">digest-condottieros-2026-08-15</guid>
+      <pubDate>Sat, 15 Aug 2026 23:59:00 +0300</pubDate>
+    </item>
+  </channel>
+</rss>

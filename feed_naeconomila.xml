@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<rss xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" version="2.0">
+  <channel>
+    <title>НаЭкономила — ежедневный дайджест</title>
+    <link>https://t.me/naeconomila</link>
+    <description>Автоматический ежедневный дайджест Telegram-канала НаЭкономила</description>
+    <docs>http://www.rssboard.org/rss-specification</docs>
+    <generator>python-feedgen</generator>
+    <language>ru</language>
+    <lastBuildDate>Sat, 15 Aug 2026 21:49:29 +0000</lastBuildDate>
+    <item>
+      <title>НаЭкономила — новости за 15.08.2026</title>
+      <link>https://t.me/naeconomila</link>
+      <description>🏦 Т‑Банк вводит новые лимиты и комиссии на переводы СБП, по картам и за границу с 15 сентября 2026 года. &lt;a href="https://t.me/naeconomila/4749"&gt;Ссылка&lt;/a&gt;&lt;br/&gt;&lt;br/&gt;🎒 Русский Стандарт даёт 15% кэшбэка на школьные товары при оформлении кредитки с 14.08 по 16.09.26 и покупках до 30.10.26. &lt;a href="https://t.me/naeconomila/4751"&gt;Ссылка&lt;/a&gt;</description>
+      <guid isPermaLink="false">digest-naeconomila-2026-08-15</guid>
+      <pubDate>Sat, 15 Aug 2026 23:59:00 +0300</pubDate>
+    </item>
+  </channel>
+</rss>
