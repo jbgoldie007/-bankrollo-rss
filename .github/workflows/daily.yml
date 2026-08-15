@@ -2,11 +2,7 @@ name: Bankrollo Daily Digest
 
 on:
   schedule:
-    # Каждые 15 минут для сбора постов
     - cron: "*/15 * * * *"
-    # Дополнительный гарантированный запуск в 01:00 MSK (22:00 UTC предыдущего дня)
-    # для создания дайджеста за прошедший день
-    - cron: "0 22 * * *"
   workflow_dispatch: {}
 
 permissions:
@@ -43,10 +39,11 @@ jobs:
         run: |
           git config user.name "bankrollo-bot"
           git config user.email "bankrollo-bot@users.noreply.github.com"
-          git add posts_archive.json feed.xml
+          git add posts_archive.json feed_bankrollo.xml feed_victorstepanych.xml feed_naeconomila.xml feed_condottieros.xml
           if git diff --cached --quiet; then
             echo "Нет изменений — коммит не требуется."
           else
             git commit -m "Auto-update: $(date -u +'%Y-%m-%d %H:%M UTC')"
             git pull --rebase --autostash origin "${{ github.ref_name }}"
             git push
+          fi
