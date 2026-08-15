@@ -55,7 +55,7 @@ CHANNELS = {
         ],
         "filter": None,  # все посты
         "title_suffix": "Bankrollo",
-        "combine_posts": False,
+        "feed_file": "feed_bankrollo.xml",
     },
     "victorstepanych": {
         "sources": [
@@ -75,7 +75,7 @@ CHANNELS = {
             )
         ),
         "title_suffix": "Victor Stepanych",
-        "combine_posts": True,  # объединяем смежные посты
+        "feed_file": "feed_victorstepanych.xml",
     },
     "naeconomila": {
         "sources": [
@@ -90,7 +90,7 @@ CHANNELS = {
             ]
         ),
         "title_suffix": "НаЭкономила",
-        "combine_posts": False,
+        "feed_file": "feed_naeconomila.xml",
     },
     "condottieros": {
         "sources": [
@@ -109,19 +109,13 @@ CHANNELS = {
             and not re.match(r"^(Небо|Морпеха|Кстати|Всем)\s+", text, re.IGNORECASE)
         ),
         "title_suffix": "Condottieros",
-        "combine_posts": False,
+        "feed_file": "feed_condottieros.xml",
     },
 }
 
-# Если вы включите GitHub Pages или иначе разместите публичный feed.xml,
-# можно указать сюда его адрес — это улучшит совместимость с некоторыми
-# читалками (необязательно).
-FEED_PUBLIC_URL = ""
-
 ARCHIVE_PATH = Path("posts_archive.json")
-FEED_PATH = Path("feed.xml")
 
-RETENTION_DAYS = 90          # сколько дней хранить записи в публичном feed.xml
+RETENTION_DAYS = 90          # сколько дней хранить записи в каждом feed_*.xml
 ARCHIVE_KEEP_DAYS = 100       # сколько дней хранить сырые посты в архиве (запас)
 
 # Окно по московскому времени, в которое можно собирать дайджест за
@@ -373,18 +367,19 @@ def summarize_batch_openrouter(posts: list):
 
 
 # --------------------------------------------------------------------------
-# ЭТАП 3: СБОРКА ДАЙДЖЕСТА И feed.xml
+# ЭТАП 3: СБОРКА ДАЙДЖЕСТОВ — ОТДЕЛЬНЫЙ feed_<канал>.xml НА КАЖДЫЙ КАНАЛ
 # --------------------------------------------------------------------------
+#
+# Каждый канал пишет в свой собственный файл (feed_bankrollo.xml,
+# feed_victorstepanych.xml и т.д.). Это специально сделано так, чтобы
+# сбой сборки одного канала (например, странный ответ LLM) не мог
+# затронуть остальные три файла — они полностью независимы.
 
-def digest_exists(target_date: str) -> bool:
-    if not FEED_PATH.exists():
+def digest_exists_in_feed(feed_path: Path, guid: str) -> bool:
+    if not feed_path.exists():
         return False
-    parsed = feedparser.parse(str(FEED_PATH))
-    target_guid = f"digest-{target_date}"
-    return any(
-        e.get("id") == target_guid or e.get("guid") == target_guid
-        for e in parsed.entries
-    )
+    parsed = feedparser.parse(str(feed_path))
+    return any(e.get("id") == guid or e.get("guid") == guid for e in parsed.entries)
 
 
 def format_item_description(posts: list, summaries: list) -> str:
@@ -396,11 +391,11 @@ def format_item_description(posts: list, summaries: list) -> str:
     return "<br/><br/>".join(parts)
 
 
-def load_existing_items(cutoff_date: date) -> list:
+def load_existing_items(feed_path: Path, cutoff_date: date, default_link: str) -> list:
     items = []
-    if not FEED_PATH.exists():
+    if not feed_path.exists():
         return items
-    parsed = feedparser.parse(str(FEED_PATH))
+    parsed = feedparser.parse(str(feed_path))
     for e in parsed.entries:
         guid = e.get("id") or e.get("guid") or e.get("link")
         pub_dt = None
@@ -413,26 +408,23 @@ def load_existing_items(cutoff_date: date) -> list:
         items.append({
             "guid": guid,
             "title": e.get("title", ""),
-            "link": e.get("link", "https://t.me/bankrollo"),
+            "link": e.get("link", default_link),
             "description": e.get("description", e.get("summary", "")),
             "pub_dt": pub_dt,
         })
     return items
 
 
-def rebuild_feed(all_items: list, new_item: dict = None) -> FeedGenerator:
+def rebuild_feed(existing_items: list, new_item: dict, channel_name: str, title_suffix: str) -> FeedGenerator:
     fg = FeedGenerator()
-    fg.title("Дайджесты telegram-каналов")
-    fg.link(href="https://t.me/bankrollo", rel="alternate")
-    if FEED_PUBLIC_URL:
-        fg.link(href=FEED_PUBLIC_URL, rel="self")
-    fg.description("Автоматические ежедневные дайджесты из telegram-каналов: Bankrollo, Victor Stepanych, НаЭкономила, Condottieros")
+    fg.title(f"{title_suffix} — ежедневный дайджест")
+    fg.link(href=f"https://t.me/{channel_name}", rel="alternate")
+    fg.description(f"Автоматический ежедневный дайджест Telegram-канала {title_suffix}")
     fg.language("ru")
 
+    all_items = list(existing_items)
     if new_item:
-        all_items = list(all_items) + [new_item]
-    else:
-        all_items = list(all_items)
+        all_items.append(new_item)
 
     seen = set()
     unique_items = []
@@ -455,15 +447,15 @@ def rebuild_feed(all_items: list, new_item: dict = None) -> FeedGenerator:
     return fg
 
 
-def write_feed_atomically(fg: FeedGenerator) -> None:
-    tmp_path = FEED_PATH.with_suffix(".tmp")
+def write_feed_atomically(fg: FeedGenerator, feed_path: Path) -> None:
+    tmp_path = feed_path.with_suffix(".tmp")
     fg.rss_file(str(tmp_path), pretty=True)
     try:
         ET.parse(tmp_path)
     except ET.ParseError as e:
         tmp_path.unlink(missing_ok=True)
-        raise RuntimeError(f"Сгенерированный feed.xml не прошёл проверку XML: {e}") from e
-    tmp_path.replace(FEED_PATH)
+        raise RuntimeError(f"Сгенерированный {feed_path} не прошёл проверку XML: {e}") from e
+    tmp_path.replace(feed_path)
 
 
 def try_build_digest(archive: dict) -> None:
@@ -474,63 +466,61 @@ def try_build_digest(archive: dict) -> None:
         return
 
     target_date = (now_msk.date() - timedelta(days=1)).isoformat()
+    cutoff_date = now_msk.date() - timedelta(days=RETENTION_DAYS)
 
-    # Группируем посты по каналам
-    posts_by_channel = {}
-    for channel_name in CHANNELS.keys():
-        posts_by_channel[channel_name] = [
+    any_built = False
+
+    for channel_name, channel_cfg in CHANNELS.items():
+        feed_path = Path(channel_cfg["feed_file"])
+        guid = f"digest-{channel_name}-{target_date}"
+
+        if digest_exists_in_feed(feed_path, guid):
+            log(f"[{channel_name}] Дайджест за {target_date} уже есть в {feed_path} — пропускаю.")
+            continue
+
+        posts_today = [
             v for v in archive.values()
             if v.get("date") == target_date and v.get("channel") == channel_name
         ]
-
-    if not any(posts_by_channel.values()):
-        log(f"В архиве нет постов за {target_date} — дайджест не создаётся, feed.xml не трогаю.")
-        return
-
-    new_items = []
-    for channel_name, posts_today in posts_by_channel.items():
         if not posts_today:
+            log(f"[{channel_name}] Нет постов за {target_date} — {feed_path} не трогаю.")
             continue
 
         posts_today.sort(key=lambda p: (p["msgid"] if p["msgid"] is not None else 0, p["ts"]))
-        channel_cfg = CHANNELS[channel_name]
-        log(f"Собираю дайджест за {target_date} канала {channel_name}: {len(posts_today)} посто(в).")
+        log(f"[{channel_name}] Собираю дайджест за {target_date}: {len(posts_today)} посто(в).")
 
-        summaries = summarize_batch_openrouter(posts_today)
+        try:
+            summaries = summarize_batch_openrouter(posts_today)
+        except Exception as e:
+            log(f"[{channel_name}] Непредвиденная ошибка при вызове LLM: {e}. Использую алгоритмическое резюме.")
+            summaries = None
         if not summaries:
             summaries = [algorithmic_summary(p["text"]) for p in posts_today]
 
         description = format_item_description(posts_today, summaries)
         title = f"{channel_cfg['title_suffix']} — новости за {format_date_ru(target_date)}"
 
-        new_items.append({
-            "guid": f"digest-{channel_name}-{target_date}",
+        new_item = {
+            "guid": guid,
             "title": title,
             "link": f"https://t.me/{channel_name}",
             "description": description,
             "pub_dt": datetime.combine(date.fromisoformat(target_date), dt_time(23, 59, 0), tzinfo=MSK),
-        })
+        }
 
-    cutoff_date = now_msk.date() - timedelta(days=RETENTION_DAYS)
-    existing_items = load_existing_items(cutoff_date)
-    
-    # Проверяем, какие item'ы уже есть (защита от дублей)
-    existing_guids = {item["guid"] for item in existing_items}
-    items_to_add = [item for item in new_items if item["guid"] not in existing_guids]
+        try:
+            existing_items = load_existing_items(feed_path, cutoff_date, f"https://t.me/{channel_name}")
+            fg = rebuild_feed(existing_items, new_item, channel_name, channel_cfg["title_suffix"])
+            write_feed_atomically(fg, feed_path)
+            log(f"[{channel_name}] {feed_path} обновлён: добавлена запись «{title}».")
+            any_built = True
+        except Exception as e:
+            log(f"[{channel_name}] ОШИБКА при записи {feed_path}: {e}. Файл НЕ изменён.")
+            # Ошибка в одном канале не останавливает обработку остальных.
+            continue
 
-    if not items_to_add:
-        log(f"Дайджесты за {target_date} уже есть в feed.xml — пропускаю (защита от дублей).")
-        return
-
-    fg = rebuild_feed(existing_items, None)
-    for item in items_to_add:
-        fg = rebuild_feed(existing_items + items_to_add, None)
-
-    try:
-        write_feed_atomically(fg)
-        log(f"feed.xml обновлён: добавлено {len(items_to_add)} дайджестов.")
-    except Exception as e:
-        log(f"ОШИБКА при записи feed.xml: {e}. Существующий feed.xml НЕ изменён.")
+    if not any_built:
+        log("На этом запуске ни один дайджест не был добавлен.")
 
 
 # --------------------------------------------------------------------------
@@ -540,7 +530,7 @@ def try_build_digest(archive: dict) -> None:
 def main() -> int:
     log("Запуск: сбор постов…")
     archive = collect_posts()
-    log("Проверка, не пора ли собрать дайджест за прошедший день…")
+    log("Проверка, не пора ли собрать дайджесты за прошедший день…")
     try_build_digest(archive)
     log("Готово.")
     return 0

@@ -1,0 +1,49 @@
+name: Bankrollo Daily Digest
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bankrollo-digest
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run digest script
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: python generate_digest.py
+
+      - name: Commit and push changes (if any)
+        run: |
+          git config user.name "bankrollo-bot"
+          git config user.email "bankrollo-bot@users.noreply.github.com"
+          git add posts_archive.json feed_bankrollo.xml feed_victorstepanych.xml feed_naeconomila.xml feed_condottieros.xml
+          if git diff --cached --quiet; then
+            echo "Нет изменений — коммит не требуется."
+          else
+            git commit -m "Auto-update: $(date -u +'%Y-%m-%d %H:%M UTC')"
+            git pull --rebase --autostash origin "${{ github.ref_name }}"
+            git push
+          fi
