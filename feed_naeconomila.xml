@@ -7,7 +7,7 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>ru</language>
-    <lastBuildDate>Wed, 19 Aug 2026 22:10:17 +0000</lastBuildDate>
+    <lastBuildDate>Thu, 20 Aug 2026 21:08:31 +0000</lastBuildDate>
     <item>
       <title>НаЭкономила — новости за 15.08.2026</title>
       <link>https://t.me/naeconomila</link>
@@ -27,7 +27,14 @@
       <link>https://t.me/naeconomila</link>
       <description>🏦 Условия по премиальным картам ОТП ужесточаются с августа. &lt;a href="https://t.me/naeconomila/4765"&gt;Ссылка&lt;/a&gt;</description>
       <guid isPermaLink="false">digest-naeconomila-2026-08-19</guid>
-      <pubDate>Wed, 19 Aug 2026 23:59:00 +0300</pubDate>
+      <pubDate>Wed, 19 Aug 2026 20:59:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>НаЭкономила — новости за 20.08.2026</title>
+      <link>https://t.me/naeconomila</link>
+      <description>💰 Яндекс Пэй предлагает до 100% кэшбэка за три покупки, которую нужно активировать в приложении. &lt;a href="https://t.me/naeconomila/4768"&gt;Ссылка&lt;/a&gt;&lt;br/&gt;&lt;br/&gt;🏦 Т-Банк добавил много новых акций с кэшбэком до 50% в магазинах и кафе. &lt;a href="https://t.me/naeconomila/4769"&gt;Ссылка&lt;/a&gt;</description>
+      <guid isPermaLink="false">digest-naeconomila-2026-08-20</guid>
+      <pubDate>Thu, 20 Aug 2026 23:59:00 +0300</pubDate>
     </item>
   </channel>
 </rss>
