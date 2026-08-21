@@ -7,7 +7,7 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>ru</language>
-    <lastBuildDate>Thu, 20 Aug 2026 21:08:31 +0000</lastBuildDate>
+    <lastBuildDate>Fri, 21 Aug 2026 21:09:48 +0000</lastBuildDate>
     <item>
       <title>НаЭкономила — новости за 15.08.2026</title>
       <link>https://t.me/naeconomila</link>
@@ -32,9 +32,16 @@
     <item>
       <title>НаЭкономила — новости за 20.08.2026</title>
       <link>https://t.me/naeconomila</link>
-      <description>💰 Яндекс Пэй предлагает до 100% кэшбэка за три покупки, которую нужно активировать в приложении. &lt;a href="https://t.me/naeconomila/4768"&gt;Ссылка&lt;/a&gt;&lt;br/&gt;&lt;br/&gt;🏦 Т-Банк добавил много новых акций с кэшбэком до 50% в магазинах и кафе. &lt;a href="https://t.me/naeconomila/4769"&gt;Ссылка&lt;/a&gt;</description>
+      <description>💰 Яндекс Пэй предлагает до 100% кэшбэка за три покупки, которую нужно активировать в приложении. &lt;a href="https://t.me/naeconomila/4768"&gt;Ссылка&lt;/a&gt;&lt;br /&gt;&lt;br /&gt;🏦 Т-Банк добавил много новых акций с кэшбэком до 50% в магазинах и кафе. &lt;a href="https://t.me/naeconomila/4769"&gt;Ссылка&lt;/a&gt;</description>
       <guid isPermaLink="false">digest-naeconomila-2026-08-20</guid>
-      <pubDate>Thu, 20 Aug 2026 23:59:00 +0300</pubDate>
+      <pubDate>Thu, 20 Aug 2026 20:59:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>НаЭкономила — новости за 21.08.2026</title>
+      <link>https://t.me/naeconomila</link>
+      <description>🏦 Озон Банк предлагает 5% кэшбэк до 1000₽ в месяц на покупки вне Ozon и подорожает подписка Premium. &lt;a href="https://t.me/naeconomila/4773"&gt;Ссылка&lt;/a&gt;</description>
+      <guid isPermaLink="false">digest-naeconomila-2026-08-21</guid>
+      <pubDate>Fri, 21 Aug 2026 23:59:00 +0300</pubDate>
     </item>
   </channel>
 </rss>
