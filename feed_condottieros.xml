@@ -7,7 +7,7 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>ru</language>
-    <lastBuildDate>Sat, 22 Aug 2026 21:03:37 +0000</lastBuildDate>
+    <lastBuildDate>Mon, 24 Aug 2026 21:20:06 +0000</lastBuildDate>
     <item>
       <title>Condottieros — новости за 15.08.2026</title>
       <link>https://t.me/condottieros</link>
@@ -60,9 +60,16 @@
     <item>
       <title>Condottieros — новости за 22.08.2026</title>
       <link>https://t.me/condottieros</link>
-      <description>🚀 В аэропорту Борисполь зафиксировано обстрел из 7 ракет, сопровождающийся пожарами в топливных резервуарах и ангарах. &lt;a href="https://t.me/condottieros/20523"&gt;Ссылка&lt;/a&gt;&lt;br/&gt;&lt;br/&gt;💥 В Борисполе уничтожены топливная база, таможенный терминал, ПВО Patriot и БПЛА, запущенные из леса. &lt;a href="https://t.me/condottieros/20524"&gt;Ссылка&lt;/a&gt;</description>
+      <description>🚀 В аэропорту Борисполь зафиксировано обстрел из 7 ракет, сопровождающийся пожарами в топливных резервуарах и ангарах. &lt;a href="https://t.me/condottieros/20523"&gt;Ссылка&lt;/a&gt;&lt;br /&gt;&lt;br /&gt;💥 В Борисполе уничтожены топливная база, таможенный терминал, ПВО Patriot и БПЛА, запущенные из леса. &lt;a href="https://t.me/condottieros/20524"&gt;Ссылка&lt;/a&gt;</description>
       <guid isPermaLink="false">digest-condottieros-2026-08-22</guid>
-      <pubDate>Sat, 22 Aug 2026 23:59:00 +0300</pubDate>
+      <pubDate>Sat, 22 Aug 2026 20:59:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Condottieros — новости за 24.08.2026</title>
+      <link>https://t.me/condottieros</link>
+      <description>Объявлен набор в «Сталинские Соколы» для управления «Геранями» с зарплатами от 450 000 до 800 000 рублей на руки для инженеров и командиров расчетов. &lt;a href="https://t.me/condottieros/20527"&gt;Ссылка&lt;/a&gt;&lt;br/&gt;&lt;br/&gt;Шесть логистических центров Ozon повреждены, акции упали на 29%, зафиксированы удары по Адыгейску, Махачкале, Невинномысску и Дагестану. В Краснодаре обломки БПЛА упали на детский сад, погибло двое детей. &lt;a href="https://t.me/condottieros/20528"&gt;Ссылка&lt;/a&gt;</description>
+      <guid isPermaLink="false">digest-condottieros-2026-08-24</guid>
+      <pubDate>Mon, 24 Aug 2026 23:59:00 +0300</pubDate>
     </item>
   </channel>
 </rss>
