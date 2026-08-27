@@ -2,7 +2,7 @@ name: Telegram Daily Digest
 
 on:
   schedule:
-    - cron: "*/15 * * * *"
+    - cron: "15 21 * * *"
   workflow_dispatch: {}
 
 permissions:
