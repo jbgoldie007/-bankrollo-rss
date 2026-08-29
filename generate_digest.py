@@ -76,7 +76,7 @@ POSTS_DIR = Path("posts")
 KEEP_DAYS = 30            # хранить записи лент, страницы постов и архив 30 дней
 
 DIGEST_WINDOW_START_HOUR = 0
-DIGEST_WINDOW_END_HOUR = 6
+DIGEST_WINDOW_END_HOUR = 12
 
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "").strip()
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
