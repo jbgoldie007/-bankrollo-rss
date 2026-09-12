@@ -7,7 +7,7 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>ru</language>
-    <lastBuildDate>Fri, 11 Sep 2026 23:07:32 +0000</lastBuildDate>
+    <lastBuildDate>Sat, 12 Sep 2026 21:16:49 +0000</lastBuildDate>
     <item>
       <title>НаЭкономила — новости за 15.08.2026</title>
       <link>https://t.me/naeconomila</link>
@@ -139,7 +139,14 @@
       <link>https://t.me/naeconomila</link>
       <description>🔑 Ключевая ставка Банка России составляет 14% &lt;a href="https://jbgoldie007.github.io/-bankrollo-rss/posts/naeconomila/2026-09-11.html#p4855"&gt;Ссылка&lt;/a&gt;</description>
       <guid isPermaLink="false">digest-naeconomila-2026-09-11</guid>
-      <pubDate>Fri, 11 Sep 2026 23:59:00 +0300</pubDate>
+      <pubDate>Fri, 11 Sep 2026 20:59:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>НаЭкономила — новости за 12.09.2026</title>
+      <link>https://t.me/naeconomila</link>
+      <description>🏦 С 11 сентября Газпромбанк начал использовать MCC 3992 для заправок «Газпромнефть», из-за чего кэшбэк по ним снизился (например, по карте МТС Деньги — с 10% до 1%). &lt;a href="https://jbgoldie007.github.io/-bankrollo-rss/posts/naeconomila/2026-09-12.html#p4856"&gt;Ссылка&lt;/a&gt;</description>
+      <guid isPermaLink="false">digest-naeconomila-2026-09-12</guid>
+      <pubDate>Sat, 12 Sep 2026 23:59:00 +0300</pubDate>
     </item>
   </channel>
 </rss>
