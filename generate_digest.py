@@ -823,7 +823,7 @@ def try_build_digest(archive: dict) -> None:
         for p, s in zip(posts, summaries):
             url = page_url(channel_name, target_date, p["msgid"]) if PUBLIC_BASE_URL else p["link"]
             parts.append(f'{html.escape(s)} <a href="{html.escape(url, quote=True)}">Ссылка</a>')
-        description = "<br/><br/>".join(parts)
+        description = "<br/><br/>".join(parts) + "<p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p>"
 
         new_item = {
             "guid": guid,
