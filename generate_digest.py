@@ -123,6 +123,16 @@ POSTS_DIR = Path("posts")
 
 KEEP_DAYS = 30            # хранить записи лент, страницы постов и архив 30 дней
 
+# Картинки к постам: скачиваются в posts/img/<канал>/<дата>/ и показываются
+# на странице поста. Хранятся меньше, чем текст, — чтобы не раздувать репозиторий.
+IMAGES_ENABLED = True
+IMAGE_KEEP_DAYS = 5       # через сколько дней удалять картинки
+IMAGE_MAX_PER_POST = 6    # не больше стольких картинок на один пост
+IMAGE_MAX_SIDE = 800      # уменьшать до такой длинной стороны (px) — чётко на телефоне
+IMAGE_QUALITY = 65        # качество JPEG после сжатия
+IMAGE_MAX_BYTES = 8_000_000
+IMAGES_DIR = POSTS_DIR / "img"
+
 DIGEST_WINDOW_START_HOUR = 0
 DIGEST_WINDOW_END_HOUR = 12
 
@@ -322,6 +332,105 @@ def fetch_source(url: str):
         return None
 
 
+# --------------------------------------------------------------------------
+# КАРТИНКИ К ПОСТАМ
+# --------------------------------------------------------------------------
+# Telegram отдаёт картинки со своего сервера (telesco.pe), который, как и t.me,
+# может не открываться без VPN. Поэтому скачиваем их к себе: на странице поста
+# они грузятся с github.io вместе с текстом.
+
+_IMG_SRC_RE = re.compile(r"""<img[^>]+src\s*=\s*["']([^"']+)["']""", re.IGNORECASE)
+_BG_URL_RE = re.compile(r"""background-image\s*:\s*url\(\s*['"]?([^'")]+)""", re.IGNORECASE)
+
+
+def extract_image_urls(raw_html: str) -> list:
+    """Ссылки на фото поста (только файлы с CDN Telegram — без эмодзи и иконок)."""
+    found = []
+    for url in _IMG_SRC_RE.findall(raw_html or "") + _BG_URL_RE.findall(raw_html or ""):
+        url = html.unescape(url.strip())
+        if url.startswith("//"):
+            url = "https:" + url
+        if not url.startswith("http"):
+            continue
+        host_ok = ("telesco.pe" in url) or ("cdn-telegram.org" in url) or ("telegram-cdn.org" in url)
+        if host_ok and "/file/" in url and url not in found:
+            found.append(url)
+        if len(found) >= IMAGE_MAX_PER_POST:
+            break
+    return found
+
+
+def _compress_image(data: bytes):
+    """Уменьшает и пережимает картинку. Если Pillow не установлен или файл
+    не открывается — возвращает исходные байты (ничего не ломается)."""
+    try:
+        from io import BytesIO
+        from PIL import Image
+        img = Image.open(BytesIO(data))
+        img = img.convert("RGB")
+        img.thumbnail((IMAGE_MAX_SIDE, IMAGE_MAX_SIDE))
+        out = BytesIO()
+        img.save(out, format="JPEG", quality=IMAGE_QUALITY, optimize=True, progressive=True)
+        small = out.getvalue()
+        return small if len(small) < len(data) else data
+    except Exception:
+        return data
+
+
+def download_post_images(channel_name: str, post_date: str, msgid, urls: list) -> list:
+    """Скачивает картинки поста. Возвращает пути относительно папки posts/
+    (например img/bankrollo/2026-10-21/68641_1.jpg). Любая ошибка — просто
+    без этой картинки, сбор постов не прерывается."""
+    if not IMAGES_ENABLED or not urls or msgid is None:
+        return []
+    day_dir = IMAGES_DIR / channel_name / post_date
+    saved = []
+    for i, url in enumerate(urls[:IMAGE_MAX_PER_POST], 1):
+        rel = f"img/{channel_name}/{post_date}/{msgid}_{i}.jpg"
+        target = POSTS_DIR / rel
+        if target.exists():
+            saved.append(rel)
+            continue
+        try:
+            resp = requests.get(
+                url, timeout=20,
+                headers={"User-Agent": "Mozilla/5.0 (compatible; DigestBot/2.0)"},
+            )
+            ctype = resp.headers.get("Content-Type", "")
+            if resp.status_code != 200 or not ctype.startswith("image/"):
+                log(f"[{channel_name}] Картинка не скачалась ({resp.status_code}, {ctype or 'нет типа'}).")
+                continue
+            if len(resp.content) > IMAGE_MAX_BYTES:
+                continue
+            day_dir.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(_compress_image(resp.content))
+            saved.append(rel)
+        except Exception as e:
+            log(f"[{channel_name}] Ошибка загрузки картинки: {e}")
+    return saved
+
+
+def prune_old_images() -> None:
+    """Удаляет папки с картинками старше IMAGE_KEEP_DAYS дней."""
+    if not IMAGES_DIR.exists():
+        return
+    import shutil
+    cutoff = datetime.now(MSK).date() - timedelta(days=IMAGE_KEEP_DAYS)
+    removed = 0
+    for day_dir in IMAGES_DIR.glob("*/*"):
+        if not day_dir.is_dir():
+            continue
+        try:
+            d = date.fromisoformat(day_dir.name)
+        except ValueError:
+            continue
+        if d < cutoff:
+            shutil.rmtree(day_dir, ignore_errors=True)
+            removed += 1
+    if removed:
+        log(f"Удалено папок со старыми картинками: {removed}.")
+
+
 def load_archive() -> dict:
     if not ARCHIVE_PATH.exists():
         return {}
@@ -341,6 +450,8 @@ def collect_posts() -> dict:
     archive = load_archive()
     new_count = 0
     skipped = 0
+    images_count = 0
+    image_cutoff = datetime.now(MSK).date() - timedelta(days=IMAGE_KEEP_DAYS)
 
     seen_fp = {}
     for v in archive.values():
@@ -358,7 +469,23 @@ def collect_posts() -> dict:
 
             msgid = extract_msgid(link)
             key = f"{channel_name}:{msgid}" if msgid is not None else f"{channel_name}:{link}"
+            raw = entry.get("summary", "")
+            if not raw and entry.get("content"):
+                raw = entry["content"][0].get("value", "")
+
             if key in archive:
+                # Пост уже собран ранее (до появления картинок) — докачиваем
+                # картинки, если он свежий и картинок у него ещё нет.
+                old = archive[key]
+                if IMAGES_ENABLED and "images" not in old:
+                    try:
+                        fresh = date.fromisoformat(old.get("date", "1970-01-01")) >= image_cutoff
+                    except ValueError:
+                        fresh = False
+                    if fresh:
+                        old["images"] = download_post_images(
+                            channel_name, old["date"], old.get("msgid"), extract_image_urls(raw))
+                        images_count += len(old["images"])
                 continue
 
             if getattr(entry, "published_parsed", None):
@@ -367,10 +494,6 @@ def collect_posts() -> dict:
                 pub_dt = datetime(*entry.updated_parsed[:6], tzinfo=UTC)
             else:
                 pub_dt = datetime.now(UTC)
-
-            raw = entry.get("summary", "")
-            if not raw and entry.get("content"):
-                raw = entry["content"][0].get("value", "")
 
             text = prepare_text(raw)
             if text is None:
@@ -387,20 +510,30 @@ def collect_posts() -> dict:
                 skipped += 1
                 continue
 
+            post_date = pub_dt.astimezone(MSK).date().isoformat()
+            images = download_post_images(channel_name, post_date, msgid, extract_image_urls(raw))
+            images_count += len(images)
+
             archive[key] = {
                 "channel": channel_name,
-                "date": pub_dt.astimezone(MSK).date().isoformat(),
+                "date": post_date,
                 "link": link,
                 "text": text,
                 "msgid": msgid,
                 "ts": pub_dt.astimezone(UTC).isoformat(),
+                "images": images,
             }
             fps.add(fp)
             new_count += 1
 
     archive = prune_archive(archive)
     ARCHIVE_PATH.write_text(json.dumps(archive, ensure_ascii=False, indent=2), encoding="utf-8")
-    log(f"Новых постов: {new_count}. Пропущено (мусор/дубли): {skipped}. В архиве: {len(archive)}.")
+    log(f"Новых постов: {new_count}. Пропущено (мусор/дубли): {skipped}. "
+        f"Картинок скачано: {images_count}. В архиве: {len(archive)}.")
+    try:
+        prune_old_images()
+    except Exception as e:
+        log(f"Не удалось удалить старые картинки: {e}")
     return archive
 
 
@@ -576,6 +709,8 @@ article:target {{ border-color: #6b9bf2; box-shadow: 0 0 0 2px #6b9bf255; }}
 .meta {{ font-size: 0.82rem; color: #9a9a9a; margin-bottom: 6px; }}
 .meta a {{ color: #6b9bf2; text-decoration: none; }}
 p {{ margin: 0; white-space: pre-wrap; }}
+.pics img {{ display: block; max-width: 100%; height: auto; border-radius: 8px;
+             margin: 0 0 10px; background: #2a2a2a; }}
 </style>
 </head>
 <body>
@@ -587,7 +722,7 @@ p {{ margin: 0; white-space: pre-wrap; }}
 
 ARTICLE_TEMPLATE = """<article id="p{msgid}">
 <div class="meta">{time_str} · <a href="{tg_link}" rel="noopener">Открыть в Telegram</a></div>
-<p>{text}</p>
+{pics}<p>{text}</p>
 </article>"""
 
 
@@ -600,9 +735,20 @@ def write_day_page(channel_name: str, channel_title: str, target_date: str, post
             t = datetime.fromisoformat(p["ts"]).astimezone(MSK).strftime("%H:%M")
         except Exception:
             t = ""
+        # Картинки: только те, что реально скачаны. Когда через несколько дней
+        # файлы удалятся, onerror просто уберёт картинку со страницы — без
+        # значка "битой" картинки.
+        imgs = [rel for rel in (p.get("images") or []) if (POSTS_DIR / rel).exists()]
+        pics = ""
+        if imgs:
+            pics = '<div class="pics">' + "".join(
+                f'<img src="../{html.escape(rel, quote=True)}" loading="lazy" alt="" '
+                f'onerror="this.remove()">' for rel in imgs
+            ) + "</div>\n"
         articles.append(ARTICLE_TEMPLATE.format(
             msgid=p["msgid"] if p["msgid"] is not None else "x",
             time_str=t,
+            pics=pics,
             tg_link=html.escape(p["link"], quote=True),
             text=html.escape(p["text"]),
         ))
@@ -627,7 +773,7 @@ def restyle_existing_pages() -> None:
     for f in POSTS_DIR.glob("*/*.html"):
         try:
             page = f.read_text(encoding="utf-8")
-            if 'name="color-scheme" content="dark"' in page:
+            if ".pics img" in page:
                 continue
             m = re.search(r"<title>(.*?)</title>", page, re.DOTALL)
             title = m.group(1) if m else ""
