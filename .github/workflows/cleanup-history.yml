@@ -1,0 +1,60 @@
+name: Cleanup History
+
+# Раз в сутки стирает старую историю изменений репозитория.
+# Сами файлы (ленты, страницы, свежие картинки, архив) не трогаются —
+# пропадают только старые версии, в том числе удалённые картинки,
+# которые иначе копились бы в истории бесконечно.
+
+on:
+  schedule:
+    - cron: "40 10 * * *"   # 13:40 по Москве — вне ночной сборки дайджеста
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+# Та же группа, что у основного workflow: они никогда не идут одновременно.
+concurrency:
+  group: telegram-digest
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Squash history
+        run: |
+          set -euo pipefail
+          git config user.name "digest-bot"
+          git config user.email "digest-bot@users.noreply.github.com"
+
+          HEAD_SHA=$(git rev-parse HEAD)
+          # Опорная точка — последнее изменение папки .github. Всё, что было
+          # после неё, сжимается в один коммит. Так новый коммит не меняет
+          # файлы workflow, и GitHub разрешает его отправить.
+          BASE=$(git log -1 --format=%H -- .github)
+
+          AFTER=$(git rev-list --count "$BASE..$HEAD_SHA")
+          if [ "$AFTER" -le 1 ]; then
+            echo "Чистить нечего: после опорной точки $AFTER коммит(ов)."
+            exit 0
+          fi
+
+          if ! git diff --quiet "$BASE" "$HEAD_SHA" -- .github; then
+            echo "Папка .github изменилась после опорной точки — пропускаю."
+            exit 0
+          fi
+
+          NEW=$(git commit-tree "$HEAD_SHA^{tree}" -p "$BASE" \
+                -m "Очистка истории: $(date -u +'%Y-%m-%d %H:%M UTC')")
+
+          # Отправляем, только если за это время никто ничего не закоммитил.
+          git push --force-with-lease="refs/heads/main:$HEAD_SHA" origin "$NEW:refs/heads/main"
+
+          echo "Готово: $AFTER коммит(ов) сжато в один. Файлы не изменились."
