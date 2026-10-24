@@ -133,8 +133,15 @@ IMAGE_QUALITY = 65        # качество JPEG после сжатия
 IMAGE_MAX_BYTES = 8_000_000
 IMAGES_DIR = POSTS_DIR / "img"
 
-DIGEST_WINDOW_START_HOUR = 0
-DIGEST_WINDOW_END_HOUR = 12
+# Дайджест за прошедший день собирается при ПЕРВОМ запуске после полуночи (МСК),
+# во сколько бы он ни случился. Если GitHub пропустил запуски, следующий запуск
+# дособерёт все пропущенные дни за последние CATCHUP_DAYS дней.
+CATCHUP_DAYS = 4
+
+# Сколько секунд за один запуск можно тратить на нейросеть. Если она тормозит,
+# остальные дайджесты соберутся без неё (первое предложение поста), чтобы
+# запуск успел завершиться и ничего не потерялось.
+LLM_TIME_BUDGET = 360
 
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "").strip()
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
@@ -666,6 +673,9 @@ def _summarize_chunk(posts: list, exclude_rules: str):
     return None
 
 
+_RUN_STARTED = time.monotonic()
+
+
 def summarize_batch(posts: list, exclude_rules: str):
     """Резюме для всех постов канала за день. Возвращает список той же длины,
     где элемент — строка-резюме либо None (исключить). Если LLM недоступен
@@ -673,10 +683,16 @@ def summarize_batch(posts: list, exclude_rules: str):
     if not OPENROUTER_API_KEY:
         log("OPENROUTER_API_KEY не задан — использую алгоритмическое резюме.")
         return None
+    if time.monotonic() - _RUN_STARTED > LLM_TIME_BUDGET:
+        log("Время на нейросеть в этом запуске исчерпано — использую алгоритмическое резюме.")
+        return None
 
     result = []
     for i in range(0, len(posts), CHUNK_SIZE):
         chunk = posts[i:i + CHUNK_SIZE]
+        if time.monotonic() - _RUN_STARTED > LLM_TIME_BUDGET:
+            log("Время на нейросеть в этом запуске исчерпано — использую алгоритмическое резюме.")
+            return None
         chunk_result = _summarize_chunk(chunk, exclude_rules)
         if chunk_result is None:
             log("OpenRouter недоступен — использую алгоритмическое резюме.")
@@ -894,14 +910,27 @@ def write_feed_atomically(fg: FeedGenerator, feed_path: Path) -> None:
 
 def try_build_digest(archive: dict) -> None:
     now_msk = datetime.now(MSK)
-
-    if not (DIGEST_WINDOW_START_HOUR <= now_msk.hour < DIGEST_WINDOW_END_HOUR):
-        log("Не окно сборки дайджеста (00:00–11:59 MSK) — только сбор постов.")
-        return
-
-    target_date = (now_msk.date() - timedelta(days=1)).isoformat()
     cutoff_date = now_msk.date() - timedelta(days=KEEP_DAYS)
 
+    # От самого старого пропущенного дня к вчерашнему.
+    for back in range(CATCHUP_DAYS, 0, -1):
+        target_date = (now_msk.date() - timedelta(days=back)).isoformat()
+        try:
+            build_digest_for_date(archive, target_date, cutoff_date)
+        except Exception as e:
+            log(f"ОШИБКА при сборке дайджестов за {target_date}: {e}")
+
+    try:
+        restyle_existing_pages()
+    except Exception as e:
+        log(f"Не удалось обновить оформление страниц: {e}")
+    try:
+        prune_old_pages()
+    except Exception as e:
+        log(f"Не удалось удалить старые страницы: {e}")
+
+
+def build_digest_for_date(archive: dict, target_date: str, cutoff_date) -> None:
     for channel_name, cfg in CHANNELS.items():
         feed_path = Path(cfg["feed_file"])
         guid = f"digest-{channel_name}-{target_date}"
@@ -988,8 +1017,7 @@ def try_build_digest(archive: dict) -> None:
             log(f"[{channel_name}] ОШИБКА записи {feed_path}: {e}. Файл не изменён.")
             continue
 
-    restyle_existing_pages()
-    prune_old_pages()
+
 
 
 # --------------------------------------------------------------------------
