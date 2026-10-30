@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#121212">
+<title>НаЭкономила — посты за 25.10.2026</title>
+<style>
+html { background: #121212; }
+body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; max-width: 720px;
+       margin: 0 auto; padding: 16px 16px calc(96px + env(safe-area-inset-bottom));
+       line-height: 1.6; color: #e4e4e4; background: #121212; }
+h1 { font-size: 1.25rem; color: #f2f2f2; }
+article { background: #1e1e1e; border: 1px solid #2c2c2c; border-radius: 10px;
+           padding: 14px 16px; margin: 14px 0; }
+article:target { border-color: #6b9bf2; box-shadow: 0 0 0 2px #6b9bf255; }
+.meta { font-size: 0.82rem; color: #9a9a9a; margin-bottom: 6px; }
+.meta a { color: #6b9bf2; text-decoration: none; }
+p { margin: 0; white-space: pre-wrap; }
+.pics img { display: block; max-width: 100%; height: auto; border-radius: 8px;
+             margin: 0 0 10px; background: #2a2a2a; }
+</style>
+<script>
+/* Переход по ссылке #pNNN: картинки выше нужного поста догружаются позже и
+   сдвигают страницу — после каждой загрузки возвращаемся к посту, пока
+   человек сам не начал листать. */
+(function () {
+  var moved = false;
+  ["touchstart", "wheel", "keydown", "mousedown"].forEach(function (e) {
+    window.addEventListener(e, function () { moved = true; }, { passive: true });
+  });
+  function jump() {
+    if (moved || !location.hash) return;
+    var el = document.getElementById(location.hash.slice(1));
+    if (el) el.scrollIntoView();
+  }
+  document.addEventListener("DOMContentLoaded", function () {
+    jump();
+    var imgs = document.images;
+    for (var i = 0; i < imgs.length; i++) {
+      imgs[i].addEventListener("load", jump);
+      imgs[i].addEventListener("error", jump);
+    }
+  });
+  window.addEventListener("load", jump);
+})();
+</script>
+</head>
+<body>
+<h1>НаЭкономила — посты за 25.10.2026</h1>
+<article id="p5046">
+<div class="meta">12:35 · <a href="https://t.me/naeconomila/5046" rel="noopener">Открыть в Telegram</a></div>
+<div class="pics"><img src="../img/naeconomila/2026-10-25/5046_1.jpg" width="800" height="428" alt="" onerror="this.remove()"></div>
+<p>🏦 Альфа: категории на ноябрь ⚡️ В Альфа-Банке можно выбирать кэшбэк на ноябрь и крутить барабан (суммируется с категориями); бонусируются покупки до 100к (500к - Only ). ▪️ Могут предложить докупить категории за кэшбэк ▪️ По картам Апельсин тоже выбираем 3 из 6 категорий ▪️ По Детским картам доступен выбор со своим барабаном ▪️ В разделе Выгода можно активировать Задания и награды и получить доп. категории ℹ️ Лимиты и количество категорий ( MCC ): ✓ 3 категории до 2000₽ – по Детской карте ✓ 3 категории до 5000₽ – для всех клиентов ✓ 4 категории до 7000₽ – с подпиской Альфа-Смарт ✓ 5 категорий 7% до 30к – с Alfa Only 🦆 По бизнес-картам тоже доступен выбор 5/6/7 категорий (в зависимости от уровня) с кэшбэком 3-10% , до 10-15к/мес, с обменом на рубли 1к1 от 3к баллов; также могут подкинуть 15% в Пятёрочке или 50% на Якиторию. Если у вас не открывается выбор в приложении — пишите в поддержку, мне за это дали месяц бесплатного обслуживания. ➖ ➖ ➖ 💳 Бонусы: 2000₽ за Альфа-Карту , 1000₽ за Детскую , 9000₽ за БС , 3000₽ за кредитку , 3000₽ за бизнес-карту , 3000₽ + год Alfa Only , 3000₽ за связь , ПНО 17% по Апельсину , 15% по НС на 3 мес ✈️ Telegram | 🔵 MAX -</p>
+</article>
+</body>
+</html>
