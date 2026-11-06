@@ -101,21 +101,6 @@ CHANNELS = {
         ],
         "exclude_raw_html": [],
     },
-    "condottieros": {
-        "source": "https://wtf.roflcopter.fr/rss-bridge/?action=display&bridge=Telegram&username=condottieros&format=Atom",
-        "title": "Condottieros",
-        "feed_file": "feed_condottieros.xml",
-        "exclude_rules": (
-            "посты, к которым прикреплён музыкальный файл (песня, трек), и посты, посвящённые песне или музыке"
-        ),
-        "exclude_keywords": [
-            r"file attachments?.*\.(mp3|m4a|ogg|flac|wav)",
-        ],
-        # Проверяется по сырому HTML поста до очистки (там видны вложения).
-        "exclude_raw_html": [
-            r"<audio", r"\.(mp3|m4a|ogg|flac|wav)\b",
-        ],
-    },
 }
 
 ARCHIVE_PATH = Path("posts_archive.json")
@@ -141,15 +126,34 @@ CATCHUP_DAYS = 4
 # Сколько секунд за один запуск можно тратить на нейросеть. Если она тормозит,
 # остальные дайджесты соберутся без неё (первое предложение поста), чтобы
 # запуск успел завершиться и ничего не потерялось.
-LLM_TIME_BUDGET = 360
+LLM_TIME_BUDGET = 540
 
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "").strip()
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
-OPENROUTER_MODELS = [
-    "openrouter/free",
-    "meta-llama/llama-3.3-70b-instruct:free",
-    "openai/gpt-oss-20b:free",
+# Бесплатные модели на OpenRouter постоянно меняются (одни убирают, другие
+# добавляют). Поэтому при каждом запуске скрипт сам смотрит актуальный список
+# бесплатных моделей и берёт лучшие из доступных — по этому порядку
+# предпочтений (ищется кусок названия модели).
+OPENROUTER_MODELS_URL = "https://openrouter.ai/api/v1/models"
+PREFERRED_FREE_MODELS = [
+    "nemotron-3-ultra",
+    "gemma-4-31b",
+    "deepseek-v4",
+    "deepseek",
+    "kimi-k2",
+    "glm-5",
+    "mistral-medium",
+    "nemotron-3-super",
+    "gpt-oss-120b",
+    "llama-3.3-70b",
+    "qwen3",
 ]
+MAX_MODELS_TO_TRY = 3
+# Не подходят для пересказа новостей (код, картинки, звук, модерация, мини-модели).
+SKIP_MODEL_WORDS = ["code", "coder", "safety", "guard", "lyria", "audio", "vision", "-vl", "omni",
+                    "nano", "-mini", "embed"]
+# Последний запасной вариант: OpenRouter сам выберет любую бесплатную модель.
+OPENROUTER_FALLBACK_MODEL = "openrouter/free"
 
 REQUEST_TIMEOUT = 25
 MAX_RETRIES = 3
@@ -163,6 +167,7 @@ UTC = ZoneInfo("UTC")
 # --------------------------------------------------------------------------
 
 ARTIFACT_PATTERNS = [
+    re.compile(r"Please open Telegram to view this post\.?\s*", re.IGNORECASE),
     re.compile(r"This media is not supported in your browser\.?\s*", re.IGNORECASE),
     re.compile(r"Media is too big\.?\s*", re.IGNORECASE),
     re.compile(r"VIEW IN TELEGRAM\.?\s*", re.IGNORECASE),
@@ -233,10 +238,12 @@ def prepare_text(raw_html: str):
     """Единая чистка текста поста. Возвращает текст либо None,
     если реального текста в посте нет (его нужно пропустить)."""
     text = BeautifulSoup(raw_html or "", "html.parser").get_text(separator=" ", strip=True)
-    if FORWARDED_RE.search(text):
-        return None
     for pattern in ARTIFACT_PATTERNS:
         text = pattern.sub("", text)
+    # Проверяем после чистки: "Please open Telegram... Forwarded from ..." —
+    # тоже пересланный пост.
+    if FORWARDED_RE.search(text):
+        return None
     text = strip_known_prefixes(text)
     text = strip_source_attribution(text)
     text = re.sub(r"\s+", " ", text).strip()
@@ -307,7 +314,7 @@ def ensure_emoji(summary: str) -> str:
         return s
     if _EMOJI_START_RE.match(s):
         return s
-    return "📌 " + s
+    return "📰 " + s
 
 
 SKIP_MARK = "SKIP"
@@ -548,6 +555,12 @@ def collect_posts() -> dict:
 # РЕЗЮМЕ: ОДНО ПРЕДЛОЖЕНИЕ + ЭМОДЗИ, ОДИН ЗАПРОС НА КАНАЛ В ДЕНЬ
 # --------------------------------------------------------------------------
 
+def first_sentence(s: str) -> str:
+    """Первое предложение пересказа (точка/!/? и дальше заглавная буква)."""
+    parts = re.split(r"(?<=[.!?…])\s+(?=[«\"A-ZА-ЯЁ])", s.strip(), maxsplit=1)
+    return parts[0].strip() if parts else s
+
+
 def algorithmic_summary(text: str) -> str:
     text = (text or "").strip()
     if not text:
@@ -559,11 +572,48 @@ def algorithmic_summary(text: str) -> str:
     return strip_source_attribution(first)
 
 
-CHUNK_SIZE = 12  # постов в одном запросе к LLM — меньше порция, надёжнее ответ
+CHUNK_SIZE = 8   # постов в одном запросе к LLM — меньше порция, внимательнее к каждому посту
+POST_TEXT_LIMIT = 2000   # сколько символов поста отдаём нейросети
+
+_MODELS_CACHE = None
+
+
+def get_models() -> list:
+    """Список моделей для этого запуска: лучшие доступные бесплатные + запасной автовыбор."""
+    global _MODELS_CACHE
+    if _MODELS_CACHE is not None:
+        return _MODELS_CACHE
+    chosen = []
+    try:
+        resp = requests.get(OPENROUTER_MODELS_URL, timeout=20)
+        resp.raise_for_status()
+        free_ids = []
+        for m in resp.json().get("data", []):
+            mid = m.get("id", "")
+            pricing = m.get("pricing") or {}
+            is_free = mid.endswith(":free") or (
+                str(pricing.get("prompt", "1")) in ("0", "0.0") and str(pricing.get("completion", "1")) in ("0", "0.0"))
+            if not is_free or mid == OPENROUTER_FALLBACK_MODEL:
+                continue
+            if any(w in mid.lower() for w in SKIP_MODEL_WORDS):
+                continue
+            free_ids.append(mid)
+        for pref in PREFERRED_FREE_MODELS:
+            for mid in free_ids:
+                if pref in mid.lower() and mid not in chosen:
+                    chosen.append(mid)
+                    break
+            if len(chosen) >= MAX_MODELS_TO_TRY:
+                break
+        log(f"Бесплатных моделей на OpenRouter: {len(free_ids)}. Выбраны: {', '.join(chosen) or 'нет подходящих'}.")
+    except Exception as e:
+        log(f"Не удалось получить список моделей OpenRouter: {e}")
+    _MODELS_CACHE = chosen + [OPENROUTER_FALLBACK_MODEL]
+    return _MODELS_CACHE
 
 
 def build_prompt(posts: list, exclude_rules: str) -> str:
-    numbered = "\n".join(f"{i + 1}. {p['text'][:600]}" for i, p in enumerate(posts))
+    numbered = "\n".join(f"{i + 1}. {p['text'][:POST_TEXT_LIMIT]}" for i, p in enumerate(posts))
     rules_block = ""
     if exclude_rules:
         rules_block = (
@@ -576,9 +626,18 @@ def build_prompt(posts: list, exclude_rules: str) -> str:
         + rules_block +
         f"Также верни \"{SKIP_MARK}\", если пост по смыслу повторяет более ранний пост из этого списка "
         "(та же новость другими словами).\n"
-        "Для каждого остального поста напиши РОВНО ОДНО короткое предложение на русском "
-        "языке, передающее главное. Сам выдели суть — коротко и понятно. "
-        "В начало каждого предложения ОБЯЗАТЕЛЬНО поставь один подходящий по смыслу эмодзи. "
+        "Для каждого остального поста напиши ОДНО короткое предложение на русском языке "
+        "своими словами — только главное событие: что произошло и с кем/где. "
+        "Обычно это 6–15 слов. Подробности, пояснения, последствия, реакции и второстепенные "
+        "цифры отбрасывай. Цифры оставляй, только если без них теряется смысл новости "
+        "(например, новая ставка, цена, число погибших). Не копируй предложение из поста.\n"
+        "Пример. Пост: «Село Лох в России третий день оцеплено пожарами, жители самостоятельно "
+        "возят воду на тракторах для защиты домов и заповедных лесов.» "
+        "Пересказ: «🔥 Село Лох в России третий день оцеплено пожарами.»\n"
+        "Ещё пример. Пост: «Банк России на заседании в пятницу сохранил ключевую ставку на уровне "
+        "16% годовых. Регулятор отметил, что инфляция замедляется быстрее ожиданий.» "
+        "Пересказ: «🏦 ЦБ сохранил ключевую ставку 16%.»\n"
+        "В начало каждого пересказа ОБЯЗАТЕЛЬНО поставь один подходящий по смыслу эмодзи. "
         "Если исходный пост на другом языке — переведи суть на русский. "
         "НЕ указывай источник новости (никаких 'пишет РБК', 'сообщает Baza', "
         "'— Известия' и т.п.) — только само событие.\n"
@@ -593,7 +652,7 @@ def _call_openrouter(model: str, prompt: str):
         "model": model,
         "messages": [{"role": "user", "content": prompt}],
         "temperature": 0.3,
-        "max_tokens": 4000,
+        "max_tokens": 6000,
     }
     headers = {
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
@@ -609,7 +668,7 @@ def _summarize_chunk(posts: list, exclude_rules: str):
     строка-резюме либо None (пост нужно исключить). При провале — None."""
     prompt = build_prompt(posts, exclude_rules)
 
-    for model in OPENROUTER_MODELS:
+    for model in get_models():
         for attempt in range(1, MAX_RETRIES + 1):
             try:
                 resp = _call_openrouter(model, prompt)
@@ -633,8 +692,14 @@ def _summarize_chunk(posts: list, exclude_rules: str):
 
             try:
                 data = resp.json()
-                content = data["choices"][0]["message"]["content"].strip()
+                content = (data["choices"][0]["message"].get("content") or "").strip()
+                content = re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL).strip()
                 content = re.sub(r"^```(json)?|```$", "", content, flags=re.MULTILINE).strip()
+                # Иногда модель пишет пояснение до/после массива — берём сам массив.
+                if not content.startswith("["):
+                    m = re.search(r"\[.*\]", content, re.DOTALL)
+                    if m:
+                        content = m.group(0)
                 items = json.loads(content)
                 if not (
                     isinstance(items, list)
@@ -646,11 +711,20 @@ def _summarize_chunk(posts: list, exclude_rules: str):
                     continue
 
                 result = []
-                for s in items:
+                bad_items = 0
+                for post, s in zip(posts, items):
                     if is_skip(s):
                         result.append(None)
-                    else:
-                        result.append(strip_source_attribution(s.strip()))
+                        continue
+                    s = strip_source_attribution(first_sentence(s.strip()))
+                    # Ответ без русских букв или слишком короткий ("stash" и т.п.)
+                    # — модель сломалась на этом посте; берём первое предложение.
+                    if len(s) < 15 or not CYRILLIC_RE.search(s):
+                        bad_items += 1
+                        s = algorithmic_summary(post["text"])
+                    result.append(s)
+                if bad_items:
+                    log(f"OpenRouter: {bad_items} пересказ(ов) были пустыми/битыми — заменены первым предложением поста.")
 
                 kept = [s for s in result if s]
                 # Если модель "пропустила" вообще всё — это подозрительно, считаем ответ битым.
@@ -674,6 +748,12 @@ def _summarize_chunk(posts: list, exclude_rules: str):
 
 
 _RUN_STARTED = time.monotonic()
+LLM_UNAVAILABLE = "LLM_UNAVAILABLE"   # нейросеть не успела/не ответила в этом запуске
+
+# Если нейросеть не успела, свежий день откладывается до следующего запуска
+# (они идут каждые 30 минут – несколько часов), а не собирается "сырым" текстом.
+# Запасной вариант без нейросети — только если день старше стольких дней.
+LLM_WAIT_DAYS = 2
 
 
 def summarize_batch(posts: list, exclude_rules: str):
@@ -684,19 +764,19 @@ def summarize_batch(posts: list, exclude_rules: str):
         log("OPENROUTER_API_KEY не задан — использую алгоритмическое резюме.")
         return None
     if time.monotonic() - _RUN_STARTED > LLM_TIME_BUDGET:
-        log("Время на нейросеть в этом запуске исчерпано — использую алгоритмическое резюме.")
-        return None
+        log("Время на нейросеть в этом запуске исчерпано.")
+        return LLM_UNAVAILABLE
 
     result = []
     for i in range(0, len(posts), CHUNK_SIZE):
         chunk = posts[i:i + CHUNK_SIZE]
         if time.monotonic() - _RUN_STARTED > LLM_TIME_BUDGET:
-            log("Время на нейросеть в этом запуске исчерпано — использую алгоритмическое резюме.")
-            return None
+            log("Время на нейросеть в этом запуске исчерпано.")
+            return LLM_UNAVAILABLE
         chunk_result = _summarize_chunk(chunk, exclude_rules)
         if chunk_result is None:
-            log("OpenRouter недоступен — использую алгоритмическое резюме.")
-            return None
+            log("OpenRouter недоступен.")
+            return LLM_UNAVAILABLE
         result.extend(chunk_result)
     return result
 
@@ -728,6 +808,31 @@ p {{ margin: 0; white-space: pre-wrap; }}
 .pics img {{ display: block; max-width: 100%; height: auto; border-radius: 8px;
              margin: 0 0 10px; background: #2a2a2a; }}
 </style>
+<script>
+/* Переход по ссылке #pNNN: картинки выше нужного поста догружаются позже и
+   сдвигают страницу — после каждой загрузки возвращаемся к посту, пока
+   человек сам не начал листать. */
+(function () {{
+  var moved = false;
+  ["touchstart", "wheel", "keydown", "mousedown"].forEach(function (e) {{
+    window.addEventListener(e, function () {{ moved = true; }}, {{ passive: true }});
+  }});
+  function jump() {{
+    if (moved || !location.hash) return;
+    var el = document.getElementById(location.hash.slice(1));
+    if (el) el.scrollIntoView();
+  }}
+  document.addEventListener("DOMContentLoaded", function () {{
+    jump();
+    var imgs = document.images;
+    for (var i = 0; i < imgs.length; i++) {{
+      imgs[i].addEventListener("load", jump);
+      imgs[i].addEventListener("error", jump);
+    }}
+  }});
+  window.addEventListener("load", jump);
+}})();
+</script>
 </head>
 <body>
 <h1>{title}</h1>
@@ -740,6 +845,18 @@ ARTICLE_TEMPLATE = """<article id="p{msgid}">
 <div class="meta">{time_str} · <a href="{tg_link}" rel="noopener">Открыть в Telegram</a></div>
 {pics}<p>{text}</p>
 </article>"""
+
+
+def _img_size_attrs(path) -> str:
+    """width/height картинки — браузер заранее оставляет под неё место,
+    и страница не "прыгает", пока картинки догружаются."""
+    try:
+        from PIL import Image
+        with Image.open(path) as im:
+            w, h = im.size
+        return f' width="{w}" height="{h}"'
+    except Exception:
+        return ""
 
 
 def write_day_page(channel_name: str, channel_title: str, target_date: str, posts: list) -> None:
@@ -758,7 +875,7 @@ def write_day_page(channel_name: str, channel_title: str, target_date: str, post
         pics = ""
         if imgs:
             pics = '<div class="pics">' + "".join(
-                f'<img src="../{html.escape(rel, quote=True)}" loading="lazy" alt="" '
+                f'<img src="../{html.escape(rel, quote=True)}"{_img_size_attrs(POSTS_DIR / rel)} alt="" '
                 f'onerror="this.remove()">' for rel in imgs
             ) + "</div>\n"
         articles.append(ARTICLE_TEMPLATE.format(
@@ -789,7 +906,7 @@ def restyle_existing_pages() -> None:
     for f in POSTS_DIR.glob("*/*.html"):
         try:
             page = f.read_text(encoding="utf-8")
-            if ".pics img" in page:
+            if "scrollIntoView" in page:
                 continue
             m = re.search(r"<title>(.*?)</title>", page, re.DOTALL)
             title = m.group(1) if m else ""
@@ -976,6 +1093,13 @@ def build_digest_for_date(archive: dict, target_date: str, cutoff_date) -> None:
         log(f"[{channel_name}] Дайджест за {target_date}: {len(posts)} посто(в) на входе.")
 
         summaries = summarize_batch(posts, cfg.get("exclude_rules", ""))
+        if summaries == LLM_UNAVAILABLE:
+            age = (datetime.now(MSK).date() - date.fromisoformat(target_date)).days
+            if OPENROUTER_API_KEY and age <= LLM_WAIT_DAYS:
+                log(f"[{channel_name}] Дайджест за {target_date} отложен до следующего запуска "
+                    f"(нейросеть не успела).")
+                continue
+            summaries = None
         if summaries is None:
             summaries = [algorithmic_summary(p["text"]) for p in posts]
 

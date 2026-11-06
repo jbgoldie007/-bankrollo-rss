@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#121212">
+<title>НаЭкономила — посты за 23.10.2026</title>
+<style>
+html { background: #121212; }
+body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; max-width: 720px;
+       margin: 0 auto; padding: 16px 16px calc(96px + env(safe-area-inset-bottom));
+       line-height: 1.6; color: #e4e4e4; background: #121212; }
+h1 { font-size: 1.25rem; color: #f2f2f2; }
+article { background: #1e1e1e; border: 1px solid #2c2c2c; border-radius: 10px;
+           padding: 14px 16px; margin: 14px 0; }
+article:target { border-color: #6b9bf2; box-shadow: 0 0 0 2px #6b9bf255; }
+.meta { font-size: 0.82rem; color: #9a9a9a; margin-bottom: 6px; }
+.meta a { color: #6b9bf2; text-decoration: none; }
+p { margin: 0; white-space: pre-wrap; }
+.pics img { display: block; max-width: 100%; height: auto; border-radius: 8px;
+             margin: 0 0 10px; background: #2a2a2a; }
+</style>
+<script>
+/* Переход по ссылке #pNNN: картинки выше нужного поста догружаются позже и
+   сдвигают страницу — после каждой загрузки возвращаемся к посту, пока
+   человек сам не начал листать. */
+(function () {
+  var moved = false;
+  ["touchstart", "wheel", "keydown", "mousedown"].forEach(function (e) {
+    window.addEventListener(e, function () { moved = true; }, { passive: true });
+  });
+  function jump() {
+    if (moved || !location.hash) return;
+    var el = document.getElementById(location.hash.slice(1));
+    if (el) el.scrollIntoView();
+  }
+  document.addEventListener("DOMContentLoaded", function () {
+    jump();
+    var imgs = document.images;
+    for (var i = 0; i < imgs.length; i++) {
+      imgs[i].addEventListener("load", jump);
+      imgs[i].addEventListener("error", jump);
+    }
+  });
+  window.addEventListener("load", jump);
+})();
+</script>
+</head>
+<body>
+<h1>НаЭкономила — посты за 23.10.2026</h1>
+<article id="p5038">
+<div class="meta">09:59 · <a href="https://t.me/naeconomila/5038" rel="noopener">Открыть в Telegram</a></div>
+<div class="pics"><img src="../img/naeconomila/2026-10-23/5038_1.jpg" loading="lazy" alt="" onerror="this.remove()"></div>
+<p>Please open Telegram to view this post 🏦 Альфа-Пятница сегодня и не только ⚡️ Сегодня можно воспользоваться акциями от Альфа-Банка с кэшбэком до 100% ( подробности ): ТОЛЬКО СЕГОДНЯ: 🌟 Кэшбэк в банях – 50% , макс 5-25к в МСК/СПБ ( подробности ) 👚 Zolla – 50% от 6к, макс 4к 🛒 Самокат (+ промокоды ) – 10-100% от 1000₽ (1500₽ - Alfa Only) 🛍 Авито Работа (+ скидка ) – 100% , макс 15к по бизнес-картам ПРОДОЛЖАЮТСЯ: 👙 Calzedonia – 40% от 3к, макс 3к по 25.10 🛍 Lamoda – 10-50% от 6-25к, макс 850₽-15к по 28.10 🛒 До 35% на кассе в Пятёрочке (+кэшбэк по ПЛ) на: ⋗ Alpen Gold – от 3 шт по 31.10, макс 500₽ ⋗ Huggies – по 06.11, макс 1000₽ ⋗ Kotex – от 2 шт по 06.11, макс 500₽ 🍔 Бигфест в ВиТ – 50% , макс 500₽/мес по 15.11 НА СЛЕДУЮЩЕЙ НЕДЕЛЕ (могут изменить) : 💎 SOKOLOV – до 100% от 7к (10к - Only) 26.10-01.11 ( pdf ) 🛒 М.Косметик – до 100% от 1500₽ 30.10 ( pdf ) 📚 Подписные издания – 50% , макс 1500₽ 30.10 ( pdf ) 🛒 Винлаб – до 100% по бизнес-картам 30.10 ➖ ➖ ➖ 💳 Бонусы: 2000₽ за Альфа-Карту , 1000₽ за Детскую , 9000₽ за БС , 3000₽ за кредитку , 3000₽ за бизнес-карту , 3000₽ + год Alfa Only , 3000₽ за связь , ПНО 17% по Апельсину , 15% по НС на 3 мес ✈️ Telegram | 🔵 MAX -</p>
+</article>
+<article id="p5040">
+<div class="meta">13:30 · <a href="https://t.me/naeconomila/5040" rel="noopener">Открыть в Telegram</a></div>
+<div class="pics"><img src="../img/naeconomila/2026-10-23/5040_1.jpg" loading="lazy" alt="" onerror="this.remove()"></div>
+<p>Please open Telegram to view this post Forwarded from Банк России 🐱 Ключевая ставка — 14%</p>
+</article>
+<article id="p5041">
+<div class="meta">15:19 · <a href="https://t.me/naeconomila/5041" rel="noopener">Открыть в Telegram</a></div>
+<div class="pics"><img src="../img/naeconomila/2026-10-23/5041_1.jpg" loading="lazy" alt="" onerror="this.remove()"></div>
+<p>Please open Telegram to view this post 🏦 МТС: починил сбой с % за СБП-платежи ⚡️ МТС сегодня списывает ошибочно начисленные проценты по кредиткам за операции по СБП 19-20 октября — можно выдохнуть и продолжить сливать лимиты в НСЖ. ✨ У меня тоже ещё пару часов назад висел долг, но сейчас бесследно испарился — проверяйте у себя. 👉🏻 1700₽ за карту — только сегодня! ✈️ Telegram | 🔵 MAX -</p>
+</article>
+<article id="p5042">
+<div class="meta">16:41 · <a href="https://t.me/naeconomila/5042" rel="noopener">Открыть в Telegram</a></div>
+<div class="pics"><img src="../img/naeconomila/2026-10-23/5042_1.jpg" loading="lazy" alt="" onerror="this.remove()"></div>
+<p>Please open Telegram to view this post 🏦 Стоит прогуляться за Даниссимо ☺️ ...ведь на него в кэшбэке дня сегодня — 100% , макс 100 . Правда, только на «Беллини: персик с игристым» (нашелся в Магните) А также: 💊 50% — анализы в СберЗдоровье (+ скидка 20% , если выбрать оплату &quot;другой картой&quot;) 🚊 45% — ж/д билеты в Т-Путешествиях, макс 1000 🛒 30% — готовая еда в Перекрёстке в Городе, макс 600 🛒 61% — Перекрёсток Доставка от 1000₽ (+ скидка ), макс 700 по традиции новичкам 🍬 Не забываем про 90% на сырки Савушкин, макс 50 по 30.11 (искать в товарах с кэшбэком) ❗️ Могут быть доступны не все акции, перед использованием необходим просмотр предложения. Сохраняйте чеки. ➖ ➖ ➖ Бонусы за карты банка: ➡️ 3000₽ + вечно бесплатная Платинум ➡️ 1000₽ или вечно бесплатная Black ✈️ Telegram | 🔵 MAX -</p>
+</article>
+</body>
+</html>
