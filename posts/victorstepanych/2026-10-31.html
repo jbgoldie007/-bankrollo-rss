@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#121212">
+<title>Victor Stepanych — посты за 31.10.2026</title>
+<style>
+html { background: #121212; }
+body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; max-width: 720px;
+       margin: 0 auto; padding: 16px 16px calc(96px + env(safe-area-inset-bottom));
+       line-height: 1.6; color: #e4e4e4; background: #121212; }
+h1 { font-size: 1.25rem; color: #f2f2f2; }
+article { background: #1e1e1e; border: 1px solid #2c2c2c; border-radius: 10px;
+           padding: 14px 16px; margin: 14px 0; }
+article:target { border-color: #6b9bf2; box-shadow: 0 0 0 2px #6b9bf255; }
+.meta { font-size: 0.82rem; color: #9a9a9a; margin-bottom: 6px; }
+.meta a { color: #6b9bf2; text-decoration: none; }
+p { margin: 0; white-space: pre-wrap; }
+.pics img { display: block; max-width: 100%; height: auto; border-radius: 8px;
+             margin: 0 0 10px; background: #2a2a2a; }
+</style>
+<script>
+/* Переход по ссылке #pNNN: картинки выше нужного поста догружаются позже и
+   сдвигают страницу — после каждой загрузки возвращаемся к посту, пока
+   человек сам не начал листать. */
+(function () {
+  var moved = false;
+  ["touchstart", "wheel", "keydown", "mousedown"].forEach(function (e) {
+    window.addEventListener(e, function () { moved = true; }, { passive: true });
+  });
+  function jump() {
+    if (moved || !location.hash) return;
+    var el = document.getElementById(location.hash.slice(1));
+    if (el) el.scrollIntoView();
+  }
+  document.addEventListener("DOMContentLoaded", function () {
+    jump();
+    var imgs = document.images;
+    for (var i = 0; i < imgs.length; i++) {
+      imgs[i].addEventListener("load", jump);
+      imgs[i].addEventListener("error", jump);
+    }
+  });
+  window.addEventListener("load", jump);
+})();
+</script>
+</head>
+<body>
+<h1>Victor Stepanych — посты за 31.10.2026</h1>
+<article id="p15599">
+<div class="meta">07:13 · <a href="https://t.me/victorstepanych/15599" rel="noopener">Открыть в Telegram</a></div>
+<p>США, Япония и Южная Корея создали трехстороннее партнерство в Арктике и Тихом океане, расширяя сотрудничество между этими тремя союзниками в арктическом регионе. Соглашение, подписанное госсекретарем США Марко Рубио и министрами иностранных дел этих стран, направлено на укрепление морского сотрудничества и развитие экономических возможностей в арктической части Тихого океана, включая развитие новых морских путей через Берингов пролив. Что-то подсказывает, что тут есть что обсуждать а плане взаимодействия с нами. Какие-то новые альянсы. Во всяком случае с Южной Кореей у нас тоже есть проект совместного использования Севморпути, сейчас замороженный из-за санкций.</p>
+</article>
+<article id="p15600">
+<div class="meta">07:35 · <a href="https://t.me/victorstepanych/15600" rel="noopener">Открыть в Telegram</a></div>
+<p>Происходящее в Польше это симптомы накопившейся внутренней агрессии в политической элите. Которую ранее не показывали, выпускали пар на Россию. Теперь вот штурм Конституционного суда, заявления о госперевороте, чрезвычайные собрания и прочие внезапные радости нестабильного состояния. Политическая элита Польши, значит, склонна к накапливанию проблем. Одно непонятное отношение к Украине - то ли там бандеровцы, то ли союзники - сильно влияет на психику. Выкрутятся конечно, Брюссель вмешается, но мы все увидели.</p>
+</article>
+<article id="p15601">
+<div class="meta">07:47 · <a href="https://t.me/victorstepanych/15601" rel="noopener">Открыть в Telegram</a></div>
+<p>Поставки ракет-перехватчиков Patriot PAC-3 на Украину из США или какое-то их производство для Украины где-то еще начнутся не ранее 2030 года. На данный момент не достигнуто никакого прорыва в вопросе совместного производства этих ракет, и нет конкретных сроков для начала их производства.</p>
+</article>
+<article id="p15604">
+<div class="meta">08:56 · <a href="https://t.me/victorstepanych/15604" rel="noopener">Открыть в Telegram</a></div>
+<div class="pics"><img src="../img/victorstepanych/2026-10-31/15604_1.jpg" width="800" height="450" alt="" onerror="this.remove()"></div>
+<p>Трамп готов к голосованию в конгресс 3 ноября. Системы ПВО, установленные на автомобилях Humvee, развернуты возле поместья Мар-а-Лаго по запросу секретной службы. Эти ракетные системы предназначены для защиты от возможной атаки беспилотников или баллистических ракет.</p>
+</article>
+<article id="p15608">
+<div class="meta">10:08 · <a href="https://t.me/victorstepanych/15608" rel="noopener">Открыть в Telegram</a></div>
+<p>Катарские дипломаты провели в Тегеране более 12 часов переговоров в пятницу, чтобы возобновить переговоры между США и Ираном и предотвратить возможную военную операцию США и Израиля после промежуточных выборов. Переговоры возобновятся в Дохе в субботу, где Катар предложит проведение инспекций иранских ядерных объектов в обмен на смягчение санкций со стороны США. В то время как Рубио и Хегсет поддерживают усиление военного давления, Вэнс, Виткофф, Кушнер и Бессент выступают за продолжение дипломатических усилий.</p>
+</article>
+<article id="p15619">
+<div class="meta">18:18 · <a href="https://t.me/victorstepanych/15619" rel="noopener">Открыть в Telegram</a></div>
+<p>Весьма любопытно. В ФСБ подтвердили, что получили информацию о подготовке теракта в Москве. Данные были переданы из США по партнерским каналам, &quot;проводится соответствующая работа&quot;, сообщили в ФСБ. Организатор кто? Кого ЦРУ-ФБР пасли?</p>
+</article>
+<article id="p15620">
+<div class="meta">18:24 · <a href="https://t.me/victorstepanych/15620" rel="noopener">Открыть в Telegram</a></div>
+<p>А теракты наверное организовывает кто-то, кому важно снова сорвать мирные переговоры?</p>
+</article>
+<article id="p15621">
+<div class="meta">19:50 · <a href="https://t.me/victorstepanych/15621" rel="noopener">Открыть в Telegram</a></div>
+<p>В Париже сегодня флики опять решили снять кино про погромы, но на сцене со спецэффектами что-то не заладилось.</p>
+</article>
+</body>
+</html>

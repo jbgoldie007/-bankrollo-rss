@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#121212">
+<title>НаЭкономила — посты за 07.11.2026</title>
+<style>
+html { background: #121212; }
+body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; max-width: 720px;
+       margin: 0 auto; padding: 16px 16px calc(96px + env(safe-area-inset-bottom));
+       line-height: 1.6; color: #e4e4e4; background: #121212; }
+h1 { font-size: 1.25rem; color: #f2f2f2; }
+article { background: #1e1e1e; border: 1px solid #2c2c2c; border-radius: 10px;
+           padding: 14px 16px; margin: 14px 0; }
+article:target { border-color: #6b9bf2; box-shadow: 0 0 0 2px #6b9bf255; }
+.meta { font-size: 0.82rem; color: #9a9a9a; margin-bottom: 6px; }
+.meta a { color: #6b9bf2; text-decoration: none; }
+p { margin: 0; white-space: pre-wrap; }
+.pics img { display: block; max-width: 100%; height: auto; border-radius: 8px;
+             margin: 0 0 10px; background: #2a2a2a; }
+</style>
+<script>
+/* Переход по ссылке #pNNN: картинки выше нужного поста догружаются позже и
+   сдвигают страницу — после каждой загрузки возвращаемся к посту, пока
+   человек сам не начал листать. */
+(function () {
+  var moved = false;
+  ["touchstart", "wheel", "keydown", "mousedown"].forEach(function (e) {
+    window.addEventListener(e, function () { moved = true; }, { passive: true });
+  });
+  function jump() {
+    if (moved || !location.hash) return;
+    var el = document.getElementById(location.hash.slice(1));
+    if (el) el.scrollIntoView();
+  }
+  document.addEventListener("DOMContentLoaded", function () {
+    jump();
+    var imgs = document.images;
+    for (var i = 0; i < imgs.length; i++) {
+      imgs[i].addEventListener("load", jump);
+      imgs[i].addEventListener("error", jump);
+    }
+  });
+  window.addEventListener("load", jump);
+})();
+</script>
+</head>
+<body>
+<h1>НаЭкономила — посты за 07.11.2026</h1>
+<article id="p5118">
+<div class="meta">19:47 · <a href="https://t.me/naeconomila/5118" rel="noopener">Открыть в Telegram</a></div>
+<div class="pics"><img src="../img/naeconomila/2026-11-07/5118_1.jpg" width="800" height="481" alt="" onerror="this.remove()"></div>
+<p>🏷️ Субботние акции 🏦 В Т-Банке ещё можно успеть поймать кэшбэк дня: ✓ скидка 500/750₽ — 🛍 AliExpress от 3500₽ ✓ До 47% — 🛒 Самокат в Городе от 1300₽, макс 1000₽ (не у всех) В кэшбэке от партнеров: ✓ 80-100% — 🐈 Sheba, макс 300 по 05.12.26 (не у всех) + Магнит нальет 35б при покупке от 2шт (ищите в розыгрышах). 🛍 На Я.Маркете : NOV500 — скидка 10%, макс 500₽, правила 🛍 На WB хватаем гречку Увелка 800гр по 56₽ 🛒 Fix Price : Е-НОЯБРЬ — скидка 400₽ от 1700₽ с самовывозом или экпресс-доставкой по 08.11 🏦 В Юмани (Кешбэк и акции → Кешбэк за чек) последние дни действует кэшбэк 100% на 1 дезодорант Blade в Магнит Косметик, макс 199₽ до 12.11.26. 🛍 В Ozon: ✓ DDX2500 — 2500 морковок в Морковске ✓ акция 3=2 на товары для животных в Ozon Fresh по 15.11 🛒 В Пятерочке за пару минут получаем 500 баллов Х5 (=50₽) просто за регистрацию на сайте акции (выдадут код — активируем в приложении) 🏦 ОТП может персонально предложить 400б за покупку по ОТП Карте, проверяем ✈️ Telegram | 🔵 MAX -</p>
+</article>
+</body>
+</html>
