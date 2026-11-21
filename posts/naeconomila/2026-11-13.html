@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#121212">
+<title>НаЭкономила — посты за 13.11.2026</title>
+<style>
+html { background: #121212; }
+body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; max-width: 720px;
+       margin: 0 auto; padding: 16px 16px calc(96px + env(safe-area-inset-bottom));
+       line-height: 1.6; color: #e4e4e4; background: #121212; }
+h1 { font-size: 1.25rem; color: #f2f2f2; }
+article { background: #1e1e1e; border: 1px solid #2c2c2c; border-radius: 10px;
+           padding: 14px 16px; margin: 14px 0; }
+article:target { border-color: #6b9bf2; box-shadow: 0 0 0 2px #6b9bf255; }
+.meta { font-size: 0.82rem; color: #9a9a9a; margin-bottom: 6px; }
+.meta a { color: #6b9bf2; text-decoration: none; }
+p { margin: 0; white-space: pre-wrap; }
+.pics img { display: block; max-width: 100%; height: auto; border-radius: 8px;
+             margin: 0 0 10px; background: #2a2a2a; }
+</style>
+<script>
+/* Переход по ссылке #pNNN: картинки выше нужного поста догружаются позже и
+   сдвигают страницу — после каждой загрузки возвращаемся к посту, пока
+   человек сам не начал листать. */
+(function () {
+  var moved = false;
+  ["touchstart", "wheel", "keydown", "mousedown"].forEach(function (e) {
+    window.addEventListener(e, function () { moved = true; }, { passive: true });
+  });
+  function jump() {
+    if (moved || !location.hash) return;
+    var el = document.getElementById(location.hash.slice(1));
+    if (el) el.scrollIntoView();
+  }
+  document.addEventListener("DOMContentLoaded", function () {
+    jump();
+    var imgs = document.images;
+    for (var i = 0; i < imgs.length; i++) {
+      imgs[i].addEventListener("load", jump);
+      imgs[i].addEventListener("error", jump);
+    }
+  });
+  window.addEventListener("load", jump);
+})();
+</script>
+</head>
+<body>
+<h1>НаЭкономила — посты за 13.11.2026</h1>
+<article id="p5141">
+<div class="meta">10:36 · <a href="https://t.me/naeconomila/5141" rel="noopener">Открыть в Telegram</a></div>
+<div class="pics"><img src="../img/naeconomila/2026-11-13/5141_1.jpg" width="800" height="662" alt="" onerror="this.remove()"></div>
+<p>🏦 30% на первый заказ в Альфа-Еде ⚡️ В экосистеме Альфа-Банка появился новый сервис — Альфа-Еда . Пока там 3 супермаркета: Перекресток, Пятерочка и Чижик. Из приятного — сборка бесплатная. За первый заказ обещают кэшбэк 30% , макс 500₽ . За каждый следующий — до 3% . Оплатить покупки можно только со счетов Альфа-Банка, кроме кредитных. Ждем ещё акций от сервиса, а пока есть смысл использовать кэшбэк 30% и продолжить пользоваться Т-Городом. ✈️ Telegram | 🔵 MAX -</p>
+</article>
+</body>
+</html>
