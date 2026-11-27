@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#121212">
+<title>НаЭкономила — посты за 22.11.2026</title>
+<style>
+html { background: #121212; }
+body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; max-width: 720px;
+       margin: 0 auto; padding: 16px 16px calc(96px + env(safe-area-inset-bottom));
+       line-height: 1.6; color: #e4e4e4; background: #121212; }
+h1 { font-size: 1.25rem; color: #f2f2f2; }
+article { background: #1e1e1e; border: 1px solid #2c2c2c; border-radius: 10px;
+           padding: 14px 16px; margin: 14px 0; }
+article:target { border-color: #6b9bf2; box-shadow: 0 0 0 2px #6b9bf255; }
+.meta { font-size: 0.82rem; color: #9a9a9a; margin-bottom: 6px; }
+.meta a { color: #6b9bf2; text-decoration: none; }
+p { margin: 0; white-space: pre-wrap; }
+.pics img { display: block; max-width: 100%; height: auto; border-radius: 8px;
+             margin: 0 0 10px; background: #2a2a2a; }
+</style>
+<script>
+/* Переход по ссылке #pNNN: картинки выше нужного поста догружаются позже и
+   сдвигают страницу — после каждой загрузки возвращаемся к посту, пока
+   человек сам не начал листать. */
+(function () {
+  var moved = false;
+  ["touchstart", "wheel", "keydown", "mousedown"].forEach(function (e) {
+    window.addEventListener(e, function () { moved = true; }, { passive: true });
+  });
+  function jump() {
+    if (moved || !location.hash) return;
+    var el = document.getElementById(location.hash.slice(1));
+    if (el) el.scrollIntoView();
+  }
+  document.addEventListener("DOMContentLoaded", function () {
+    jump();
+    var imgs = document.images;
+    for (var i = 0; i < imgs.length; i++) {
+      imgs[i].addEventListener("load", jump);
+      imgs[i].addEventListener("error", jump);
+    }
+  });
+  window.addEventListener("load", jump);
+})();
+</script>
+</head>
+<body>
+<h1>НаЭкономила — посты за 22.11.2026</h1>
+<article id="p5181">
+<div class="meta">12:42 · <a href="https://t.me/naeconomila/5181" rel="noopener">Открыть в Telegram</a></div>
+<div class="pics"><img src="../img/naeconomila/2026-11-22/5181_1.jpg" width="800" height="682" alt="" onerror="this.remove()"></div>
+<p>➕ 🖥 Яндекс Плюс от 2290₽/год в Ситилинке ⚡️ В Ситилинке сейчас можно купить подписку Яндекс Плюс на год скидкой за 2790₽ вместо 4990₽ (после входа в аккаунт). 👍 Версия семейная, на 4х человек, суммируется с активной подпиской. Код активации придет на email, активировать можно в течение 1 года. Пробуем применить промокоды : 🏷 ПЕРВЫЙЗАКАЗ — скидка 5% на первый заказ ( подробности ), итого 2650₽ 🏷 В приложении Т2 → Больше (с любым оператором!) есть индивидуальный промокод на 1000₽ от 5000₽ — с ним берем 2 подписки по 2290₽/год за каждую 🔥 ➕ Можно списать баллы Ситилинка и получить кэшбэк от банков (МСС 5722 - техника, электроника) или баллы Плюса при оплате по кнопке Я.Пэй (или списать их с доплатой от 10₽). ➕ Для новичков (или если нет подписки от 30 дней) есть промики на 30/45 дней за 0/1₽. 👉🏻 Получить год подписки Яндекс Плюс за 2790₽ ✈️ Telegram | 🔵 MAX -</p>
+</article>
+<article id="p5182">
+<div class="meta">15:04 · <a href="https://t.me/naeconomila/5182" rel="noopener">Открыть в Telegram</a></div>
+<div class="pics"><img src="../img/naeconomila/2026-11-22/5182_1.jpg" width="800" height="553" alt="" onerror="this.remove()"></div>
+<p>👀 Кому линзы от Alcon бесплатно? ⚡️ Наткнулась на неплохую акцию от Buzzaar — если вам 18+ и вы носите линзы, можно получить набор PRECISION7 от Alcon на неделю ношения БЕСПЛАТНО + доп. бонус от бренда. 👉🏻 Для этого нужно оставить заявку по ссылке (попросят фото упаковки ваших линз на фоне сайта) , пройти отбор и в течение 7 дней после получения поделиться опытом в онлайн-опросе . 📍 Линзы бесплатно рассылают по всей РФ, участвовать можно из любого города. Я тоже оставила заявку, надеюсь пришлют в мои бубеня. 🔔 Акция завершается уже завтра — успеваем 🔗 ✈️ Telegram | 🔵 MAX -</p>
+</article>
+</body>
+</html>

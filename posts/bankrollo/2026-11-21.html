@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#121212">
+<title>Новости дня — посты за 21.11.2026</title>
+<style>
+html { background: #121212; }
+body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; max-width: 720px;
+       margin: 0 auto; padding: 16px 16px calc(96px + env(safe-area-inset-bottom));
+       line-height: 1.6; color: #e4e4e4; background: #121212; }
+h1 { font-size: 1.25rem; color: #f2f2f2; }
+article { background: #1e1e1e; border: 1px solid #2c2c2c; border-radius: 10px;
+           padding: 14px 16px; margin: 14px 0; }
+article:target { border-color: #6b9bf2; box-shadow: 0 0 0 2px #6b9bf255; }
+.meta { font-size: 0.82rem; color: #9a9a9a; margin-bottom: 6px; }
+.meta a { color: #6b9bf2; text-decoration: none; }
+p { margin: 0; white-space: pre-wrap; }
+.pics img { display: block; max-width: 100%; height: auto; border-radius: 8px;
+             margin: 0 0 10px; background: #2a2a2a; }
+</style>
+<script>
+/* Переход по ссылке #pNNN: картинки выше нужного поста догружаются позже и
+   сдвигают страницу — после каждой загрузки возвращаемся к посту, пока
+   человек сам не начал листать. */
+(function () {
+  var moved = false;
+  ["touchstart", "wheel", "keydown", "mousedown"].forEach(function (e) {
+    window.addEventListener(e, function () { moved = true; }, { passive: true });
+  });
+  function jump() {
+    if (moved || !location.hash) return;
+    var el = document.getElementById(location.hash.slice(1));
+    if (el) el.scrollIntoView();
+  }
+  document.addEventListener("DOMContentLoaded", function () {
+    jump();
+    var imgs = document.images;
+    for (var i = 0; i < imgs.length; i++) {
+      imgs[i].addEventListener("load", jump);
+      imgs[i].addEventListener("error", jump);
+    }
+  });
+  window.addEventListener("load", jump);
+})();
+</script>
+</head>
+<body>
+<h1>Новости дня — посты за 21.11.2026</h1>
+<article id="p70439">
+<div class="meta">08:54 · <a href="https://t.me/bankrollo/70439" rel="noopener">Открыть в Telegram</a></div>
+<p>Зумер заставил Claude всю ночь играть в GTA 6 и заработал на этом $10 тысяч. 18-летний парень пригрозил нейросети отменой подписки за $200, если та умрёт в игре. В итоге ИИ 12 часов сам нарезал короткие ролики и выкладывал их в соцсети. @bankrollo</p>
+</article>
+<article id="p70441">
+<div class="meta">09:22 · <a href="https://t.me/bankrollo/70441" rel="noopener">Открыть в Telegram</a></div>
+<p>Окружение Трампа во всём с ним соглашается, рассказала Мелания Трамп. По её словам, она старается говорить президенту правду, даже если её мнение отличается от его позиции. «Я чувствую, что иногда вокруг него слишком много людей, которые просто соглашаются со всем, и это нездорово». @bankrollo</p>
+</article>
+<article id="p70442">
+<div class="meta">10:14 · <a href="https://t.me/bankrollo/70442" rel="noopener">Открыть в Telegram</a></div>
+<p>Московский Дед Мороз хочет пересесть на беспилотник — РИА Новости. В предстоящую новогоднюю ночь он будет управлять санями сам, но в будущем они могут стать беспилотными, отметил он. @bankrollo</p>
+</article>
+<article id="p70447">
+<div class="meta">12:05 · <a href="https://t.me/bankrollo/70447" rel="noopener">Открыть в Telegram</a></div>
+<p>Школьник выбрал «67» вместо подписи в первом паспорте и теперь будет ходить с ней 6 лет. @bankrollo https://t.me/bankrollo/69112 В МВД разрешили россиянам ставить подпись «67» в паспорте. Такая подпись не является основанием для признания документа недействительным, отметили в ведомстве. @bankrollo</p>
+</article>
+<article id="p70449">
+<div class="meta">12:49 · <a href="https://t.me/bankrollo/70449" rel="noopener">Открыть в Telegram</a></div>
+<div class="pics"><img src="../img/bankrollo/2026-11-21/70449_1.jpg" width="800" height="562" alt="" onerror="this.remove()"></div>
+<p>Татьяна Ким больше не гендиректор Wildberries. Эту должность занял топ-менеджер платформы Алексей Куликов. В понедельник Ким попала в санкционные списки ЕС. @bankrollo</p>
+</article>
+<article id="p70451">
+<div class="meta">13:14 · <a href="https://t.me/bankrollo/70451" rel="noopener">Открыть в Telegram</a></div>
+<p>Дроны атаковали судно в Финском заливе, сообщил губернатор Ленобласти Дрозденко. Грузовой корабль, шедший в Калининград, был атакован в нейтральных водах. @bankrollo</p>
+</article>
+<article id="p70453">
+<div class="meta">14:19 · <a href="https://t.me/bankrollo/70453" rel="noopener">Открыть в Telegram</a></div>
+<p>Дания предложила ЕС прекратить выдачу туристических виз россиянам и не признавать небиометрические паспорта, пишет Reuters. Ранее стало известно, что Дания собирается временно ограничить выдачу виз российским гражданам. @bankrollo</p>
+</article>
+<article id="p70455">
+<div class="meta">15:35 · <a href="https://t.me/bankrollo/70455" rel="noopener">Открыть в Telegram</a></div>
+<p>Максимум 90 минут в день можно играть в GTA 6, чтобы не сойти с ума, рассказала клинический психолог Уманова. По её словам, игровой марафон — это многочасовая статическая нагрузка с перевозбуждением нервной системы. 50 часов сюжета, «утрамбованные» в свободные двое суток, можно считать не отпуском, а сменой на износ, отметила она. @bankrollo</p>
+</article>
+<article id="p70456">
+<div class="meta">16:35 · <a href="https://t.me/bankrollo/70456" rel="noopener">Открыть в Telegram</a></div>
+<p>Огромного монстра выловили в Москве-реке. Им оказался гигантский сом весом 27 кг. Рыбу взвесили, сделали фото и отпустили. @bankrollo</p>
+</article>
+<article id="p70458">
+<div class="meta">18:50 · <a href="https://t.me/bankrollo/70458" rel="noopener">Открыть в Telegram</a></div>
+<p>Окружение Трампа во всём с ним соглашается, рассказала Мелания Трамп. По её словам, она старается говорить президенту правду, даже если её мнение отличается от его позиции. «Я чувствую, что иногда вокруг него слишком много людей, которые просто соглашаются… https://t.me/bankrollo/70441 Трамп заявил, что одарён на генетическом уровне. «Один мой родственник всю жизнь посвятил Массачусетскому политеху и стал величайшим профессором в истории вуза. Поэтому я одарён на генетическом уровне!». Всё это время госсекретарь Рубио едва сдерживал смех, а в конце просто не выдержал. @bankrollo</p>
+</article>
+<article id="p70460">
+<div class="meta">20:25 · <a href="https://t.me/bankrollo/70460" rel="noopener">Открыть в Telegram</a></div>
+<p>По всему Калининграду звучат сирены воздушной тревоги, жителей призвали укрыться в безопасных местах — Mash. @bankrollo</p>
+</article>
+<article id="p70462">
+<div class="meta">21:38 · <a href="https://t.me/bankrollo/70462" rel="noopener">Открыть в Telegram</a></div>
+<div class="pics"><img src="../img/bankrollo/2026-11-21/70462_1.jpg" width="800" height="407" alt="" onerror="this.remove()"></div>
+<p>Скины в CS2 стремительно дешевеют. Капитализация рухнула уже до $5 млрд, а с исторического максимума в октябре 2025 года рынок обвалился на 43%. Падение длится уже год и связано с обновлением, когда Valve разрешила крафтить ножи и другие редкие предметы из красных скинов. @bankrollo</p>
+</article>
+</body>
+</html>

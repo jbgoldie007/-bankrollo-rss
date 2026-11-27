@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#121212">
+<title>Bankrollo — посты за 07.11.2026</title>
+<style>
+html { background: #121212; }
+body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; max-width: 720px;
+       margin: 0 auto; padding: 16px 16px calc(96px + env(safe-area-inset-bottom));
+       line-height: 1.6; color: #e4e4e4; background: #121212; }
+h1 { font-size: 1.25rem; color: #f2f2f2; }
+article { background: #1e1e1e; border: 1px solid #2c2c2c; border-radius: 10px;
+           padding: 14px 16px; margin: 14px 0; }
+article:target { border-color: #6b9bf2; box-shadow: 0 0 0 2px #6b9bf255; }
+.meta { font-size: 0.82rem; color: #9a9a9a; margin-bottom: 6px; }
+.meta a { color: #6b9bf2; text-decoration: none; }
+p { margin: 0; white-space: pre-wrap; }
+.pics img { display: block; max-width: 100%; height: auto; border-radius: 8px;
+             margin: 0 0 10px; background: #2a2a2a; }
+</style>
+<script>
+/* Переход по ссылке #pNNN: картинки выше нужного поста догружаются позже и
+   сдвигают страницу — после каждой загрузки возвращаемся к посту, пока
+   человек сам не начал листать. */
+(function () {
+  var moved = false;
+  ["touchstart", "wheel", "keydown", "mousedown"].forEach(function (e) {
+    window.addEventListener(e, function () { moved = true; }, { passive: true });
+  });
+  function jump() {
+    if (moved || !location.hash) return;
+    var el = document.getElementById(location.hash.slice(1));
+    if (el) el.scrollIntoView();
+  }
+  document.addEventListener("DOMContentLoaded", function () {
+    jump();
+    var imgs = document.images;
+    for (var i = 0; i < imgs.length; i++) {
+      imgs[i].addEventListener("load", jump);
+      imgs[i].addEventListener("error", jump);
+    }
+  });
+  window.addEventListener("load", jump);
+})();
+</script>
+</head>
+<body>
+<h1>Bankrollo — посты за 07.11.2026</h1>
+<article id="p69648">
+<div class="meta">00:43 · <a href="https://t.me/bankrollo/69648" rel="noopener">Открыть в Telegram</a></div>
+<p>Мосэнергосбыт отключил все сервисы до 9 ноября. Невозможно оплатить электроэнергию, контакт-центр, сайт и онлайн-сервисы не работают. @bankrollo</p>
+</article>
+<article id="p69650">
+<div class="meta">08:54 · <a href="https://t.me/bankrollo/69650" rel="noopener">Открыть в Telegram</a></div>
+<p>Россия и Украина хотят урегулировать конфликт — Трамп. По его словам, 6 ноября он провёл телефонные переговоры на эту тему, а 7 ноября продолжит звонки. С кем именно он разговаривал, президент США не уточнил, но пообещал большое соглашение, которое затронет всю Европу. @bankrollo</p>
+</article>
+<article id="p69651">
+<div class="meta">09:21 · <a href="https://t.me/bankrollo/69651" rel="noopener">Открыть в Telegram</a></div>
+<div class="pics"><img src="../img/bankrollo/2026-11-07/69651_1.jpg" width="800" height="512" alt="" onerror="this.remove()"></div>
+<p>Путин перевёл во временное управление активы Japan Tobacco International. В неё входят Winston, Camel, American Spirit, Benson &amp; Hedges, а также продукция для нагревания табака Ploom. Теперь компанией будет управлять АО «Промышленные активы». JTI — лидер табачного… https://t.me/bankrollo/69556 Путин перевёл ещё ряд активов Japan Tobacco International во временное управление. Согласно указу, 100% акций АО «Переславль-Табак», ООО «Дж.Т.И. Инновационные продукты» и ООО «Дж.Т.И. Россия» переданы АО «Промышленные активы». @bankrollo</p>
+</article>
+<article id="p69652">
+<div class="meta">09:43 · <a href="https://t.me/bankrollo/69652" rel="noopener">Открыть в Telegram</a></div>
+<p>США готовы заплатить $20 млн за точное расположение ядерных объектов Ирана. За эти деньги американские власти также ждут от информаторов данные о техническом оснащении объектов, а также информацию о перемещении специалистов, задействованных в разработках оружия. Власти даже готовы оказать информаторам помощь в переезде за границу, сообщили в Госдепе США. @bankrollo</p>
+</article>
+<article id="p69653">
+<div class="meta">10:22 · <a href="https://t.me/bankrollo/69653" rel="noopener">Открыть в Telegram</a></div>
+<p>Рекордные 450 млн рублей украли мошенники у москвички под видом ФСБ. В полиции выяснили, как аферисты год назад получили такую сумму. По их данным, с женщиной связался лжесотрудник ФСБ, напугавший её утечкой персональных данных и угрозой сбережениям. В итоге она сняла деньги и передала курьеру якобы для перевода на безопасный счёт. @bankrollo</p>
+</article>
+<article id="p69654">
+<div class="meta">11:43 · <a href="https://t.me/bankrollo/69654" rel="noopener">Открыть в Telegram</a></div>
+<p>Уехавшим за границу россиянам запретят покупать крипту с российских карт через P2P. С 1 июля 2027 года они смогут приобретать крипту за деньги с российских счетов только через посредников из реестра ЦБ. При этом они смогут переводить зарплату на свой счёт в зарубежном банке или покупать USDT у официальных обменников и брокеров из списка ЦБ. Однако за каждое нарушение им будет грозить штраф до 40% от суммы и блокировка карты. @bankrollo</p>
+</article>
+<article id="p69655">
+<div class="meta">12:21 · <a href="https://t.me/bankrollo/69655" rel="noopener">Открыть в Telegram</a></div>
+<p>Проверки «зайцев» в Москве превратились в спецоперации по поимке преступников. @bankrollo</p>
+</article>
+<article id="p69657">
+<div class="meta">13:20 · <a href="https://t.me/bankrollo/69657" rel="noopener">Открыть в Telegram</a></div>
+<p>Россияне планируют потратить в среднем 17 тысяч рублей во время «Чёрной пятницы», подсчитали в SuperJob. Каждый второй хочет потратить до 10 тысяч рублей и лишь 8% — более 50 тысяч рублей. @bankrollo</p>
+</article>
+<article id="p69659">
+<div class="meta">13:45 · <a href="https://t.me/bankrollo/69659" rel="noopener">Открыть в Telegram</a></div>
+<p>Убийство людей по ту сторону фронта должно быть из любви к ним, объяснил философ Дугин. По его словам, стрелять «братьям и сёстрам» в сердце, лицо и голову приходится ради их спасения и будущего единства. Люди пока даже не способны осознать важность цели, ради которой это делается, считает он. @bankrollo</p>
+</article>
+<article id="p69661">
+<div class="meta">14:20 · <a href="https://t.me/bankrollo/69661" rel="noopener">Открыть в Telegram</a></div>
+<div class="pics"><img src="../img/bankrollo/2026-11-07/69661_1.jpg" width="800" height="600" alt="" onerror="this.remove()"></div>
+<p>Сборные по хоккею Швеции, Финляндии, Норвегии, Дании и Латвии отказались играть на чемпионате мира 2027, если на него допустят Россию. @bankrollo https://t.me/bankrollo/69465 Сборную Беларуси по хоккею не допустили до участия в чемпионате мира в 2027 году. Такое решение приняла Международная федерация хоккея. @bankrollo</p>
+</article>
+<article id="p69662">
+<div class="meta">14:46 · <a href="https://t.me/bankrollo/69662" rel="noopener">Открыть в Telegram</a></div>
+<p>Грузовик с видеокартами Nvidia на $11,4 млн исчез в США. Груз забрали в Окленде 29 августа для доставки в Техас, но по дороге машина пропала вместе с водителем. В прошлом году в Калифорнии уже наворовали продукции Nvidia более чем на $7,5 млн. @bankrollo</p>
+</article>
+<article id="p69663">
+<div class="meta">15:27 · <a href="https://t.me/bankrollo/69663" rel="noopener">Открыть в Telegram</a></div>
+<div class="pics"><img src="../img/bankrollo/2026-11-07/69663_1.jpg" width="746" height="453" alt="" onerror="this.remove()"></div>
+<p>Мосэнергосбыт отключил все сервисы до 9 ноября, жалуются клиенты. Они не могут оплатить счета за электроэнергию онлайн, а контакт-центр и все онлайн-сервисы предприятия не работают. Проблема затронула почти 10 млн человек в Москве и Подмосковье. @bankrollo</p>
+</article>
+<article id="p69664">
+<div class="meta">15:38 · <a href="https://t.me/bankrollo/69664" rel="noopener">Открыть в Telegram</a></div>
+<p>Binance France закроет все счета французам 31 декабря 2026 года. Бирже не удалось получить разрешение MiCA, необходимое для работы в ЕС, которое стало обязательным с 30 июня. Ввод средств уже приостановлен, а с 29 ноября пользователям, на счетах которых останутся активы, начнут начислять ежемесячную комиссию в размере 0,025%. Закрытие касается только счетов, открытых в Binance France, а не всех пользователей Binance во Франции. @bankrollo</p>
+</article>
+<article id="p69665">
+<div class="meta">16:02 · <a href="https://t.me/bankrollo/69665" rel="noopener">Открыть в Telegram</a></div>
+<p>Жителям Курской области выделят 1,5 млрд рублей на жилищные сертификаты. Их получат переселенцы из приграничных районов, всего будет выделено 204 сертификата, сообщил губернатор Хинштейн. В целом в области уже выдали 16,5 тысячи таких сертификатов на 104 млрд рублей. @bankrollo</p>
+</article>
+<article id="p69666">
+<div class="meta">16:28 · <a href="https://t.me/bankrollo/69666" rel="noopener">Открыть в Telegram</a></div>
+<p>Российские туристы массово заражаются неизвестным вирусом во Вьетнаме, пишет Shot. Они жалуются на высокую температуру и сильный кашель, а местные врачи не могут поставить точный диагноз и просто назначают противовирусные препараты и антибиотики. Предполагаемый источник заражения — грязные кондиционеры в отелях. Роспотребнадзор уже запросил данные местного Минздрава Вьетнама. @bankrollo</p>
+</article>
+<article id="p69669">
+<div class="meta">18:04 · <a href="https://t.me/bankrollo/69669" rel="noopener">Открыть в Telegram</a></div>
+<p>Лягушкам официально разрешили квакать по ночам в Австрии. Решение вынес Верховный суд страны после многолетнего спора местных жителей и лягушек в пруду у одного из соседей, пишет Heute. @bankrollo</p>
+</article>
+<article id="p69672">
+<div class="meta">20:46 · <a href="https://t.me/bankrollo/69672" rel="noopener">Открыть в Telegram</a></div>
+<p>Демократы начали готовить свой первый пакет помощи Украине на $15 млрд после победы на выборах в США — FT. Также партия намерена ужесточить санкции против России. @bankrollo</p>
+</article>
+<article id="p69673">
+<div class="meta">21:10 · <a href="https://t.me/bankrollo/69673" rel="noopener">Открыть в Telegram</a></div>
+<p>Силовики устроили массовые задержания на Китай-городе в Москве, туда приехало больше 10 автозаков — «Осторожно, новости». Задержанных так много, что «в автозаке нечем дышать». @bankrollo</p>
+</article>
+</body>
+</html>

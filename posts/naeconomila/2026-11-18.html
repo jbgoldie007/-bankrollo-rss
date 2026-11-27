@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#121212">
+<title>НаЭкономила — посты за 18.11.2026</title>
+<style>
+html { background: #121212; }
+body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; max-width: 720px;
+       margin: 0 auto; padding: 16px 16px calc(96px + env(safe-area-inset-bottom));
+       line-height: 1.6; color: #e4e4e4; background: #121212; }
+h1 { font-size: 1.25rem; color: #f2f2f2; }
+article { background: #1e1e1e; border: 1px solid #2c2c2c; border-radius: 10px;
+           padding: 14px 16px; margin: 14px 0; }
+article:target { border-color: #6b9bf2; box-shadow: 0 0 0 2px #6b9bf255; }
+.meta { font-size: 0.82rem; color: #9a9a9a; margin-bottom: 6px; }
+.meta a { color: #6b9bf2; text-decoration: none; }
+p { margin: 0; white-space: pre-wrap; }
+.pics img { display: block; max-width: 100%; height: auto; border-radius: 8px;
+             margin: 0 0 10px; background: #2a2a2a; }
+</style>
+<script>
+/* Переход по ссылке #pNNN: картинки выше нужного поста догружаются позже и
+   сдвигают страницу — после каждой загрузки возвращаемся к посту, пока
+   человек сам не начал листать. */
+(function () {
+  var moved = false;
+  ["touchstart", "wheel", "keydown", "mousedown"].forEach(function (e) {
+    window.addEventListener(e, function () { moved = true; }, { passive: true });
+  });
+  function jump() {
+    if (moved || !location.hash) return;
+    var el = document.getElementById(location.hash.slice(1));
+    if (el) el.scrollIntoView();
+  }
+  document.addEventListener("DOMContentLoaded", function () {
+    jump();
+    var imgs = document.images;
+    for (var i = 0; i < imgs.length; i++) {
+      imgs[i].addEventListener("load", jump);
+      imgs[i].addEventListener("error", jump);
+    }
+  });
+  window.addEventListener("load", jump);
+})();
+</script>
+</head>
+<body>
+<h1>НаЭкономила — посты за 18.11.2026</h1>
+<article id="p5169">
+<div class="meta">13:06 · <a href="https://t.me/naeconomila/5169" rel="noopener">Открыть в Telegram</a></div>
+<div class="pics"><img src="../img/naeconomila/2026-11-18/5169_1.jpg" width="800" height="466" alt="" onerror="this.remove()"></div>
+<p>🏦 100% в ВиТ + ещё один барабан в Альфе ⚡️ У некоторых клиентов Альфа-Банка (не у всех) появился ещё один барабан в разделе Выгода, проверяем: ✈️ Альфа-Тревел — 15-100% на первую оплату авиабилетов и отелей в течение всей недели (крутим каждую неделю по 13.12), кроме детской карты и оплаты частями. FAQ / Правила 🍔 Уже идёт акция с кэшбэком 100% во Вкусно и Точка, сегодня — яичница на завтрак (~165₽) и Чикен Премьер на обед (~179₽). FAQ / Меню по дням в правилах . 🏷 RY7VW7WW34T9Y — 50 бонусов в ВиТ для новичков, вводить в приложении в разделе &quot;Акции&quot; 💰 Могут снова предложить выбрать доп. категорию кэшбэка до 22 ноября (суммируется с кэшбэком в категориях на месяц) — проверяем у себя. 👉🏻 Остальные акции Альфы на эту неделю ✈️ Telegram | 🔵 MAX -</p>
+</article>
+<article id="p5170">
+<div class="meta">13:33 · <a href="https://t.me/naeconomila/5170" rel="noopener">Открыть в Telegram</a></div>
+<div class="pics"><img src="../img/naeconomila/2026-11-18/5170_1.jpg" width="580" height="313" alt="" onerror="this.remove()"></div>
+<p>➕ В чате делятся результатом вчерашнего набега на подписки Яндекса (не забываем отключать продление!): ✅ Потрачено – 2993 ₽ ✅ Получено – 5392 балла Плюса ✅ Доп. бонус – 300 баллов за автопополнение ( персоналка , могут предложить после оплаты подписки) ➕ Баллами компенсированы покупки + в Своих Плюсах за их получение дают промокоды на скидку в сервисах Яндекса. P.S. Если вам доступен барабан , там может выпасть ещё 100% — возможно, имеет смысл не подключать сразу все подписки. ✈️ Telegram | 🔵 MAX -</p>
+</article>
+<article id="p5171">
+<div class="meta">13:42 · <a href="https://t.me/naeconomila/5171" rel="noopener">Открыть в Telegram</a></div>
+<div class="pics"><img src="../img/naeconomila/2026-11-18/5171_1.jpg" width="601" height="366" alt="" onerror="this.remove()"></div>
+<p>🍞 🛒 Забираем 200₽ в Самокат или Купер Получить промокод можно за пару минут в игре по ссылке . 🔥 Хорошая новость — минимальной суммы заказа нет, т.е. в Самокате можно урвать что-то почти бесплатно . P.S. Пишут, что промики уже закончились, но возможно подвезут ещё – стоит проверить позже. ✈️ Telegram | 🔵 MAX -</p>
+</article>
+</body>
+</html>

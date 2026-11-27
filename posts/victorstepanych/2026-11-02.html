@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#121212">
+<title>Victor Stepanych — посты за 02.11.2026</title>
+<style>
+html { background: #121212; }
+body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; max-width: 720px;
+       margin: 0 auto; padding: 16px 16px calc(96px + env(safe-area-inset-bottom));
+       line-height: 1.6; color: #e4e4e4; background: #121212; }
+h1 { font-size: 1.25rem; color: #f2f2f2; }
+article { background: #1e1e1e; border: 1px solid #2c2c2c; border-radius: 10px;
+           padding: 14px 16px; margin: 14px 0; }
+article:target { border-color: #6b9bf2; box-shadow: 0 0 0 2px #6b9bf255; }
+.meta { font-size: 0.82rem; color: #9a9a9a; margin-bottom: 6px; }
+.meta a { color: #6b9bf2; text-decoration: none; }
+p { margin: 0; white-space: pre-wrap; }
+.pics img { display: block; max-width: 100%; height: auto; border-radius: 8px;
+             margin: 0 0 10px; background: #2a2a2a; }
+</style>
+<script>
+/* Переход по ссылке #pNNN: картинки выше нужного поста догружаются позже и
+   сдвигают страницу — после каждой загрузки возвращаемся к посту, пока
+   человек сам не начал листать. */
+(function () {
+  var moved = false;
+  ["touchstart", "wheel", "keydown", "mousedown"].forEach(function (e) {
+    window.addEventListener(e, function () { moved = true; }, { passive: true });
+  });
+  function jump() {
+    if (moved || !location.hash) return;
+    var el = document.getElementById(location.hash.slice(1));
+    if (el) el.scrollIntoView();
+  }
+  document.addEventListener("DOMContentLoaded", function () {
+    jump();
+    var imgs = document.images;
+    for (var i = 0; i < imgs.length; i++) {
+      imgs[i].addEventListener("load", jump);
+      imgs[i].addEventListener("error", jump);
+    }
+  });
+  window.addEventListener("load", jump);
+})();
+</script>
+</head>
+<body>
+<h1>Victor Stepanych — посты за 02.11.2026</h1>
+<article id="p15649">
+<div class="meta">05:22 · <a href="https://t.me/victorstepanych/15649" rel="noopener">Открыть в Telegram</a></div>
+<p>Окончательные цифры по Сербии. На выборах победил &quot;Студенческий список&quot; – после обработки 100% участков он набрал 53,01% голосов. &quot;Объединённая Сербия&quot; бывшего президента Александра Вучича получила 38,98%. Остальные партии не преодолели трёхпроцентный барьер. Теперь Вучич в оппозиции к студентам, которые преподнесли настоящий сюрприз.</p>
+</article>
+<article id="p15650">
+<div class="meta">05:46 · <a href="https://t.me/victorstepanych/15650" rel="noopener">Открыть в Telegram</a></div>
+<div class="pics"><img src="../img/victorstepanych/2026-11-02/15650_1.jpg" width="671" height="727" alt="" onerror="this.remove()"></div>
+<p>Кто-то взломал официальную службу оповещений Украины. В России система оповещений работает в штатном режиме.</p>
+</article>
+<article id="p15652">
+<div class="meta">10:01 · <a href="https://t.me/victorstepanych/15652" rel="noopener">Открыть в Telegram</a></div>
+<p>«Содействие международному развитию» звучит как очередная сложная бюрократическая формула. Но за ней вполне практичная идея: помогать другим странам так, чтобы результат был и у партнёров, и у самой России. Правительство внесло в Госдуму соответствующий законопроект. Образование, медицинские технологии, промышленное сотрудничество, льготные кредиты, поставки товаров и услуг — всё это теперь предполагается объединить в рамках единой государственной политики. Причём одну из ключевых ролей отводят Россотрудничеству. Агентство будет координировать взаимодействие ведомств и компаний, сопровождать международные проекты и оценивать результаты. Игорь Чайка приводит хороший пример. Иностранный студент получает образование в России, возвращается домой и работает на развитие своей страны. А для России он остаётся человеком, который знает нашу страну, поддерживает с ней связи и, по выражению Чайки, становится её «амбассадором». Тот же принцип с медицинскими технологиями, сельским хозяйством, энергетикой. У Минсельхоза, Росатома, других государственных структур и частного бизнеса есть компетенции, востребованные за рубежом. Новый закон позволит эффективнее объединять эти возможности. В результате государство-партнёр получает технологии, подготовленные кадры и возможности для развития. Россия — новые экономические связи и укрепление своего присутствия. В международной политике совершенно необязательно выбирать между помощью другим и собственными интересами. Гораздо разумнее, когда одно работает на другое.</p>
+</article>
+<article id="p15655">
+<div class="meta">13:20 · <a href="https://t.me/victorstepanych/15655" rel="noopener">Открыть в Telegram</a></div>
+<div class="pics"><img src="../img/victorstepanych/2026-11-02/15655_1.jpg" width="600" height="800" alt="" onerror="this.remove()"></div>
+<p>КСИР проводит испытательные пуски баллистических ракет в районе города Хамедан на западе Ирана.</p>
+</article>
+<article id="p15656">
+<div class="meta">13:35 · <a href="https://t.me/victorstepanych/15656" rel="noopener">Открыть в Telegram</a></div>
+<p>На Украине ждут массированную ракетную атаку этой ночью. У них же теперь есть спутниковый интернет.</p>
+</article>
+<article id="p15657">
+<div class="meta">14:38 · <a href="https://t.me/victorstepanych/15657" rel="noopener">Открыть в Telegram</a></div>
+<p>Трамп будет править с помощью вето, если демократы победят: &quot;Если демократы победят, я стану «господином вето»&quot;. А если импичмент?</p>
+</article>
+<article id="p15658">
+<div class="meta">16:46 · <a href="https://t.me/victorstepanych/15658" rel="noopener">Открыть в Telegram</a></div>
+<p>Точное число людей, покинувших Алешки в ходе гуманитарной миссии, неизвестно, сообщила уполномоченный по правам человека в России Яна Лантратова. &quot;У нас просто не было ни времени, ни возможности считать людей, мы не считали их по головам&quot;. Организаторы предусмотрели 750 мест для желающих уехать из Алешек. Однако не все они оказались заняты: как отметила омбудсмена, после завершения эвакуации многие автобусы возвращались обратно пустыми.</p>
+</article>
+<article id="p15659">
+<div class="meta">16:58 · <a href="https://t.me/victorstepanych/15659" rel="noopener">Открыть в Telegram</a></div>
+<p>Украина может перестать наносить удары по российским НПЗ, если США предоставят ей ракеты Patriot , - Зеленский. Скоро Трампу придется начинать специальную военную операцию. Аппетиты сабжа безграничны.</p>
+</article>
+<article id="p15660">
+<div class="meta">17:05 · <a href="https://t.me/victorstepanych/15660" rel="noopener">Открыть в Telegram</a></div>
+<p>Владимир Путин назначил Антона Вайно, Эльвиру Набиуллину, Александра Новака, Максима Орешкина, Максима Решетникова и Антона Силуанова членами наблюдательного совета Российского фонда прямых инвестиций. Это не значит, что все они будут наблюдать за Кириллом Дмитриевым. Это значит, что через РФПИ пойдет еще больше средств, и часть из них будут иметь внешнеполитическую значимость.</p>
+</article>
+<article id="p15662">
+<div class="meta">17:55 · <a href="https://t.me/victorstepanych/15662" rel="noopener">Открыть в Telegram</a></div>
+<p>Уже 7 стран Европы заявили об атаках на холодильники в супермаркетах. А кино снимут про это?</p>
+</article>
+<article id="p15664">
+<div class="meta">18:20 · <a href="https://t.me/victorstepanych/15664" rel="noopener">Открыть в Telegram</a></div>
+<p>Ничего себе. Госпереворот предотвращен на западе Казахстана, сообщает Комитет нацбезопасности Казахстана (КНБ). Задержана группа из 10 человек, которые планировали насильственно изменить основы конституционного строя в западном регионе. Они подозреваются в создании, руководстве и участии в деятельности экстремистской группы, а также пропаганде терроризма и разжигании религиозной розни. Уточняется, что задержанные организовали работу трех подпольных учебных центров для детей и подростков. Деятельность этих организаций пресечена. Опять у них в Атырау агенты западных спецслужб орудуют.</p>
+</article>
+<article id="p15666">
+<div class="meta">20:05 · <a href="https://t.me/victorstepanych/15666" rel="noopener">Открыть в Telegram</a></div>
+<p>18 ударов за полчаса нанесли ВС РФ ракетами и авиабомбами по мосту в Затоке Одесской области.</p>
+</article>
+</body>
+</html>

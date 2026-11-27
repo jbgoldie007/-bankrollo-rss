@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#121212">
+<title>НаЭкономила — посты за 16.11.2026</title>
+<style>
+html { background: #121212; }
+body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; max-width: 720px;
+       margin: 0 auto; padding: 16px 16px calc(96px + env(safe-area-inset-bottom));
+       line-height: 1.6; color: #e4e4e4; background: #121212; }
+h1 { font-size: 1.25rem; color: #f2f2f2; }
+article { background: #1e1e1e; border: 1px solid #2c2c2c; border-radius: 10px;
+           padding: 14px 16px; margin: 14px 0; }
+article:target { border-color: #6b9bf2; box-shadow: 0 0 0 2px #6b9bf255; }
+.meta { font-size: 0.82rem; color: #9a9a9a; margin-bottom: 6px; }
+.meta a { color: #6b9bf2; text-decoration: none; }
+p { margin: 0; white-space: pre-wrap; }
+.pics img { display: block; max-width: 100%; height: auto; border-radius: 8px;
+             margin: 0 0 10px; background: #2a2a2a; }
+</style>
+<script>
+/* Переход по ссылке #pNNN: картинки выше нужного поста догружаются позже и
+   сдвигают страницу — после каждой загрузки возвращаемся к посту, пока
+   человек сам не начал листать. */
+(function () {
+  var moved = false;
+  ["touchstart", "wheel", "keydown", "mousedown"].forEach(function (e) {
+    window.addEventListener(e, function () { moved = true; }, { passive: true });
+  });
+  function jump() {
+    if (moved || !location.hash) return;
+    var el = document.getElementById(location.hash.slice(1));
+    if (el) el.scrollIntoView();
+  }
+  document.addEventListener("DOMContentLoaded", function () {
+    jump();
+    var imgs = document.images;
+    for (var i = 0; i < imgs.length; i++) {
+      imgs[i].addEventListener("load", jump);
+      imgs[i].addEventListener("error", jump);
+    }
+  });
+  window.addEventListener("load", jump);
+})();
+</script>
+</head>
+<body>
+<h1>НаЭкономила — посты за 16.11.2026</h1>
+<article id="p5152">
+<div class="meta">10:28 · <a href="https://t.me/naeconomila/5152" rel="noopener">Открыть в Telegram</a></div>
+<div class="pics"><img src="../img/naeconomila/2026-11-16/5152_1.jpg" width="771" height="800" alt="" onerror="this.remove()"></div>
+<p>🏦 🍔 Кэшбэк 100% во Вкусно и Точка от Альфы ⚡️ Со среды по пятницу с 18.11 по 25.12.26 во Вкусно и Точка можно получать 100% кэшбэка по картам Альфа-Банка, в т.ч. Детским, в рамках акции «Вкусный календарь». FAQ / Правила : 🗓️ Кэшбэк можно получить 2 раза за день за 1 продукт из раздела Акция утра и Акция дня (предложения на среду и четверг известны заранее, на пятницу — в день акции) ℹ️ Условия : • заказ можно оформить в приложении или по QR-коду из него на кассе или терминале • суммируется с выбранными категориями, включающими фастфуд, или 1% на всё • акция не действует при оплате айфоном • выплата по 10 числам, сверх лимита по ПЛ ➖ ➖ ➖ 💳 Бонусы: 2000₽ за Альфа-Карту , 1000₽ за Детскую , 9000₽ за БС , 3000₽ за кредитку , 3000₽ за бизнес-карту , 3000₽ + год Alfa Only , 3000₽ за связь , ПНО 17% по Апельсину , до 15% по НС ✈️ Telegram | 🔵 MAX -</p>
+</article>
+<article id="p5158">
+<div class="meta">13:04 · <a href="https://t.me/naeconomila/5158" rel="noopener">Открыть в Telegram</a></div>
+<div class="pics"><img src="../img/naeconomila/2026-11-16/5158_1.jpg" width="800" height="766" alt="" onerror="this.remove()"></div>
+<p>📦 1000 ВАУ-баллов от Озона + 20% в Озон Селект ⚡️ Озон сегодня снова начисляет по 1000 ВАУ-баллов (возможно не всем) , проверяйте; списать можно на одежду, обувь и аксессуары (до 50% от чека, 1б=1₽). Правила . ❗️ Списать баллы можно не на все товары, на подходящих есть метка &quot;Списать до 1000₽&quot;. Срок действия баллов — до 13.12.26. Новый промик для Озон Селект: 🏷 GIFT20 — скидка 20%, макс 2000₽ на все товары по 22.11.26 (возможно, не для всех) + с Ozon Ultra можно компенсировать до 1000₽/мес в тестовый период ➖ ➖ ➖ 💳 Бесплатная Ozon карта 💳 Кредитка до 140 дней без % 👛 15,1% по НС / повторно ✈️ Telegram | 🔵 MAX -</p>
+</article>
+</body>
+</html>
